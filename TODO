@@ -1,0 +1,37 @@
+TODO
+----
+
+- Important
+   - Ability to do TLS with immediate handshake (443, 5223, etc.)
+   - Remove callback methods that are not async (connectionFailed is the
+     same as the exceptions raised by openConnection, e.g.). Rethink...
+     use asyncio.Event???
+   - timeouts in protocol functions
+   - login-stress
+     - Multi-proc
+     - Abstract login strategy for different implementations
+   - Application signal handers, might help cancelling pending tasks (cleanup)
+   - Disco support... particularly when a mixin is constructed and added to 
+     a stream the streams DiscoMixin/map should be updated to reflect that
+     the new mixin is suported (jabber:iq:version, etc.)
+
+- Useful
+   - SSL Context options, lock down, cert vaildation, etc.
+   - Allow "by" attributes on stanza errors.
+   ~ bind errors
+   - jabber:iq:register via stream:feature (not legacy)
+
+- Meh
+   - jabber:iq:auth via stream:feature (not legacy)
+          
+
+Public Servers
+---------------
+
+   x jabber.org - Isode M-Link
+   - darkdna.net - Prosody
+   - jabberd.eu - jabberd2
+   - jabbim.com - ejabberd
+   x jabber.nicfit.net - XCP
+   x tigase.im - Tigase
+   - jabber.rootbash.com - Openfire (register form gives captcha error)
