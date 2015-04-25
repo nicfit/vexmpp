@@ -1,5 +1,5 @@
 .PHONY: clean-pyc clean-build clean-patch docs clean help lint test test-all \
-        coverage docs release dist 
+        coverage docs release dist maintainer-clean
 
 help:
 	@echo "clean - remove all build, test, coverage and Python artifacts"
@@ -73,3 +73,5 @@ dist: clean
 
 tags:
 	ctags -R ./vexmpp
+
+maintainer-clean: clean

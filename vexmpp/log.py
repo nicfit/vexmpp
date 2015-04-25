@@ -4,6 +4,7 @@ import logging.config
 from io import StringIO
 
 DEFAULT_FORMAT = "<%(name)s>: %(asctime)s [%(levelname)s]: %(message)s"
+METRICS_FORMAT = "<metrics time='%(asctime)s'>%(message)s</metrics>"
 MAIN_LOGGER = "vexmpp"
 
 # Add a verbose level more than INFO and less than DEBUG
@@ -38,10 +39,10 @@ DEFAULT_LOGGING_CONFIG = """
 keys = root, vexmpp, vexmpp.metrics
 
 [handlers]
-keys = console
+keys = console, metrics
 
 [formatters]
-keys = generic
+keys = generic, metrics
 
 [logger_root]
 level = WARN
@@ -55,14 +56,6 @@ qualname = vexmpp
 handlers =
 propagate = 1
 
-[logger_vexmpp.metrics]
-level = NOTSET
-qualname = vexmpp.metrics
-; When adding more specific handlers than what exists on the root you'll
-; likely want to set propagate to false.
-handlers =
-propagate = 1
-
 [handler_console]
 class = StreamHandler
 args = (sys.stderr,)
@@ -70,9 +63,24 @@ level = NOTSET
 formatter = generic
 
 [formatter_generic]
-format = %(generic_format)s
-""" % {"generic_format": DEFAULT_FORMAT,
-       }
+format = {generic_format}
+
+[logger_vexmpp.metrics]
+level = NOTSET
+qualname = vexmpp.metrics
+handlers = metrics
+propagate = 0
+
+[handler_metrics]
+class = FileHandler
+args = ("vexmpp-metrics.log", "w", None, True)
+level = NOTSET
+formatter = metrics
+
+[formatter_metrics]
+format = {metrics_format}
+
+""".format(generic_format=DEFAULT_FORMAT, metrics_format=METRICS_FORMAT)
 
 
 logging.setLoggerClass(Logger)
