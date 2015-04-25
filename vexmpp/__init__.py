@@ -21,7 +21,7 @@ Run with --help/-h for usage information or read the docs at
 %(__web__)s
 """ % (locals())
 
-from .log import log                                                     # noqa
+from . import log                                                        # noqa
 
 from .jid import Jid                                                     # noqa
 from . import stanzas                                                    # noqa
