@@ -23,13 +23,16 @@ class Stanza(object):
     _NEXT_ID = 1
     _UUID = str(uuid.uuid4()).split("-")[0]
 
-    def __init__(self, tag=None, nsmap=None, xml=None):
+    def __init__(self, tag=None, nsmap=None, xml=None, attrs=None):
         if xml is not None:
             self.xml = xml
         elif tag:
             self.xml = etree.Element(tag, nsmap=nsmap)
         else:
             raise ValueError("'tag' or 'xml' argument is required")
+
+        for name, value in (attrs or {}).items():
+            self._setAttr(name, value)
 
     def _initAttributes(self, to=None, frm=None, type=None, id=None):
         if to:
@@ -256,14 +259,14 @@ class StreamError(Stanza, RuntimeError):
 class Iq(Stanza):
     XPATH = ("/iq", None)
 
-    def __init__(self, to=None, frm=None, type=None, id=None, request=None,
-                 xml=None, id_prefix=None):
+    def __init__(self, to=None, frm=None, type="get", id=None, request=None,
+                 xml=None, id_prefix=None, attrs=None):
         if xml is not None:
             assert(xml.tag == "iq")
             assert(None not in xml.nsmap)
-            super().__init__(xml=xml)
+            super().__init__(xml=xml, attrs=attrs)
         else:
-            super().__init__("iq")
+            super().__init__("iq", attrs=attrs)
             self._initAttributes(to=to, frm=frm, id=id, type=type)
             if id is None:
                 # Iqs most of all need id values
@@ -302,13 +305,13 @@ class Presence(Stanza):
     ORDERED_SHOWS = [SHOW_CHAT, None, SHOW_AWAY, SHOW_XA, SHOW_DND]
 
     def __init__(self, to=None, frm=None, type=TYPE_AVAILABLE, priority=None,
-                 show=None, status=None, xml=None):
+                 show=None, status=None, xml=None, attrs=None):
         if xml is not None:
             assert(xml.tag == "presence")
             assert(None not in xml.nsmap)
-            super().__init__(xml=xml)
+            super().__init__(xml=xml, attrs=attrs)
         else:
-            super().__init__("presence")
+            super().__init__("presence", attrs=attrs)
             self._initAttributes(to=to, frm=frm, type=type)
             self.priority = priority
             self.show = show
@@ -394,13 +397,13 @@ class Message(Stanza):
     TYPE_NORMAL = "normal"
 
     def __init__(self, to=None, frm=None, type=TYPE_CHAT, subject=None,
-                 body=None, thread=None, xml=None):
+                 body=None, thread=None, xml=None, attrs=None):
         if xml is not None:
             assert(xml.tag == "message")
             assert(None not in xml.nsmap)
-            super().__init__(xml=xml)
+            super().__init__(xml=xml, attrs=attrs)
         else:
-            super().__init__("message")
+            super().__init__("message", attrs=attrs)
             self._initAttributes(to=to, frm=frm, type=type)
             self.subject = subject
             self.body = body
