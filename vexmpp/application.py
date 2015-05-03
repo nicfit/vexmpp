@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
+import sys
 import asyncio
 import logging
 import logging.config
+from .utils import ArgumentParser
 
 log = logging.getLogger(__name__)
 
 
 class Application(object):
 
-    def __init__(self, user_func=None, app_name=None):
+    def __init__(self, user_func=None, app_name=None, argument_parser=None):
         global log
 
         self.event_loop = asyncio.get_event_loop()
         self._entry_point = user_func if user_func else self._main
         self._exit_status = 0
         self.log = logging.getLogger(app_name) if app_name else log
+        self.arg_parser = argument_parser or ArgumentParser()
+        self.args = None
 
     @asyncio.coroutine
     def _main(self):
@@ -26,7 +30,9 @@ class Application(object):
 
     @asyncio.coroutine
     def _mainTask(self):
-        log.debug("Application::_mainTask()")
+        log.debug("Application::_mainTask(): {}".format(sys.argv))
+
+        self.args = self.arg_parser.parse_args()
 
         exit_status = 128
         try:
@@ -37,8 +43,18 @@ class Application(object):
         except asyncio.CancelledError as ex:
             self._mainCancelled()
         except Exception as ex:
-            log.exception("Unhandled exception thrown from '%s': %s" %
-                          (str(self._entry_point), str(ex)))
+            if hasattr(self.args, "debug_pdb") and self.args.debug_pdb:
+                try:
+                    # Must delay the import of ipdb as say as possible because
+                    # of https://github.com/gotcha/ipdb/issues/48
+                    import ipdb as pdb
+                except ImportError:
+                    import pdb
+                e, m, tb = sys.exc_info()
+                pdb.post_mortem(tb)
+            else:
+                log.exception("Unhandled exception thrown from '%s': %s" %
+                              (str(self._entry_point), str(ex)))
             exit_status = 254
         finally:
             exit_status = exit_status if exit_status is not None else 255
