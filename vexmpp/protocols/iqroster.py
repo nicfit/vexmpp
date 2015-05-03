@@ -168,7 +168,7 @@ class RosterMixin(Mixin):
 
     @asyncio.coroutine
     def postSession(self, stream):
-        roster = yield from get(stream)
+        roster = yield from get(stream, timeout=stream.default_timeout)
         self.roster.updateRoster(roster)
 
     @xpathFilter([("/iq[@type='set']/ns:query", {"ns": NS_URI})])

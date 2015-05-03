@@ -16,8 +16,10 @@ NS_URI = "jabber:iq:version"
 GET_XPATH = ("/iq[@type='get']/ns:query", {"ns": NS_URI})
 
 
-def get(stream, to):
-    iq = yield from stream.sendAndWaitIq(NS_URI, to=to, raise_on_error=True)
+@asyncio.coroutine
+def get(stream, to, timeout=None):
+    iq = yield from stream.sendAndWaitIq(NS_URI, to=to, raise_on_error=True,
+                                         timeout=timeout)
     return iq
 
 
