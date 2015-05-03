@@ -170,7 +170,8 @@ def openConnection(creds, host=None, port=DEFAULT_C2S_PORT, callbacks=None,
 
     ProtocolFactory = functools.partial(StreamClass, creds,
                                         state_callbacks=callbacks,
-                                        mixins=mixins)
+                                        mixins=mixins,
+                                        default_timeout=timeout)
 
     conn = create_starttls_connection(loop, ProtocolFactory, *peer,
                                       use_starttls=True,
@@ -187,10 +188,6 @@ def openConnection(creds, host=None, port=DEFAULT_C2S_PORT, callbacks=None,
         yield from stream.negotiate(timeout=timeout)
         signalEvent(callbacks, "sessionStarted", stream)
     except Exception as ex:
-        msg = "Stream negotiation failed" if connected else "Connecting"
-        ex_str = str(ex) or ex.__class__.__name__
-        log.error("%s failed (%s): %s" % (msg, creds.jid.full, ex_str))
-
         if not connected:
             signalEvent(callbacks, "connectionFailed", peer[0], peer[1], ex)
         else:

@@ -26,6 +26,9 @@ else:
         def __exit__(self, ty, val, tb):
             return False
 
+_ENFORCE_TIMEOUTS = bool("VEX_ENFORCE_TIMEOUTS" in os.environ and
+                         int(os.environ["VEX_ENFORCE_TIMEOUTS"]))
+
 
 class ParserTask(asyncio.Task):
     def __init__(self, stream, loop=None):
@@ -59,7 +62,8 @@ class ParserTask(asyncio.Task):
 class Stream(asyncio.Protocol):
     '''Base class for XMPP streams.'''
 
-    def __init__(self, creds, state_callbacks=None, mixins=None):
+    def __init__(self, creds, state_callbacks=None, mixins=None,
+                 default_timeout=None):
         self.creds = creds
         self._transport = None
         self._waiter_queues = []
@@ -77,6 +81,7 @@ class Stream(asyncio.Protocol):
                     self.__dict__[name] = obj
 
         self._parser_task = ParserTask(self)
+        self.default_timeout = default_timeout
 
     @property
     def connected(self):
@@ -93,6 +98,10 @@ class Stream(asyncio.Protocol):
     @property
     def tls_active(self):
         return self._tls_active
+
+    @property
+    def jid(self):
+        return self.creds.jid
 
     def close(self):
         if self.connected:
@@ -156,6 +165,8 @@ class Stream(asyncio.Protocol):
             xpaths = [xpaths]
 
         log.debug("Stream wait for %s [timeout=%s]" % (xpaths, timeout))
+        if _ENFORCE_TIMEOUTS and not timeout:
+            raise RuntimeError("Timeout not set error")
 
         queue = asyncio.JoinableQueue()
         self._waiter_queues.append(queue)
@@ -218,6 +229,15 @@ class Stream(asyncio.Protocol):
         self._tls_active = False
         log.debug('The server closed the connection: %s' % str(reason))
         signalEvent(self._callbacks, "disconnected", self, reason)
+
+    @property
+    def default_timeout(self):
+        return self._default_timeout
+
+    @default_timeout.setter
+    def default_timeout(self, t):
+        t = int(t) or None
+        self._default_timeout = t
 
 
 class Mixin(object):
