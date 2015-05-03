@@ -56,7 +56,9 @@ class ArgumentParser(argparse.ArgumentParser):
 
     def __init__(self, add_logging_opts=True, config_opts=ConfigOpt.none,
                  config_required=False, sample_config=None,
-                 config_class=None, config_args=None, **kwargs):
+                 config_class=None, config_args=None,
+                 add_debug_opts=True,
+                 **kwargs):
 
         kwargs["add_help"] = True
         super().__init__(**kwargs)
@@ -86,6 +88,7 @@ class ArgumentParser(argparse.ArgumentParser):
 
         self._ConfigParser = config_class or ConfigParser
         self._config_args = config_args or tuple([])
+
         if config_opts != self.ConfigOpt.none:
             group = self.add_argument_group("Configuration options")
 
@@ -111,6 +114,12 @@ class ArgumentParser(argparse.ArgumentParser):
                 group.add_argument("--sample-config", dest="__sample_config",
                                    action="store_true",
                                    help="Output a sample configuration file.")
+
+        if add_debug_opts:
+            group = self.add_argument_group("Debugging options")
+            group.add_argument("--pdb", action="store_true", dest="debug_pdb",
+                               help="Invoke pdb (or ipdb if available) on "
+                                    "uncaught exceptions.")
 
     def _handleConfigFileOpts(self, args):
         if "config_file" in args:
@@ -193,7 +202,10 @@ class ArgumentParser(argparse.ArgumentParser):
         self._handleConfigFileOpts(parsed_args)
 
         # Process log level opts last, they override any any config file.
-        self._handleLoggingOpts(parsed_args)
+        try:
+            self._handleLoggingOpts(parsed_args)
+        except Exception as ex:
+            self.error("Logging option error: {}".format(ex))
 
         return parsed_args
 
