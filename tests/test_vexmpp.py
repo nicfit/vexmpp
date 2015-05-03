@@ -28,7 +28,7 @@ class TestVexmpp(unittest.TestCase):
 
         main_log = None
         try:
-            main_log = getattr(vexmpp, "log")
+            main_log = getattr(vexmpp.log, "log")
         except:
             pass
         assert(main_log is not None)
