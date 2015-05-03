@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import asyncio
 from lxml import etree
-from ..jid import Jid
+from ..jid import Jid as BaseJid
 from ..stanzas import Presence, Iq
 
 '''
@@ -15,6 +15,20 @@ NS_URI_OWNER = "%s#owner"  % NS_URI
 NS_URI_UNIQUE = "%s#unique" % NS_URI
 NS_URI_USER = "%s#user"   % NS_URI
 NS_CONFERENCE_URI = "jabber:x:conference"
+
+
+class Jid(BaseJid):
+    @property
+    def nick(self):
+        return self.resource
+
+    @property
+    def room(self):
+        return self.user
+
+    @property
+    def room_jid(self):
+        return self.bare_jid
 
 
 def selfPresenceXpath(nick_jid):
@@ -35,7 +49,7 @@ def enterRoom(stream, room, service, nick, password=None,
               config_new_room_callback=None, timeout=None):
     nick_jid = Jid((room, service, nick))
 
-    room_jid = nick_jid.bare_jid
+    room_jid = nick_jid.room_jid
 
     pres = Presence(to=nick_jid)
 
