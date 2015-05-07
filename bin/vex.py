@@ -19,10 +19,11 @@ except:
 from vexmpp.jid import Jid
 from vexmpp.errors import XmppError
 from vexmpp.application import Application
-from vexmpp.client import (Credentials, openConnection, DEFAULT_C2S_PORT,
+from vexmpp.core import openConnection
+from vexmpp.client import (Credentials, DEFAULT_C2S_PORT,
                            ClientStreamCallbacks)
 from vexmpp.stanzas import Presence
-from vexmpp.protocols import iqroster, presence, iqversion, entity_time
+from vexmpp.protocols import iqversion
 from vexmpp.utils import ArgumentParser
 
 
@@ -35,18 +36,7 @@ def _outputXml(stanza):
 
 @asyncio.coroutine
 def main(app):
-    description = "Simple XMPP client. The user will be prompted for a login "\
-                  "password unless the environment variable VEX_PASSWD is set."
-    arg_parser = ArgumentParser(description=description)
-    arg_parser.add_argument("jid", help="Jabber ID for login")
-    arg_parser.add_argument("--host", help="Alternative server for connecting")
-    arg_parser.add_argument("--port", type=int, default=DEFAULT_C2S_PORT,
-                            help="Alternative port for connecting")
-    arg_parser.add_argument("--disconnect", action="store_true",
-                            help="Disconnect once stream negotiation completes."
-                           )
-
-    args = arg_parser.parse_args()
+    args = app.args
 
     if "VEX_PASSWD" in os.environ:
         password = os.environ["VEX_PASSWD"]
@@ -56,16 +46,10 @@ def main(app):
     if not jid.resource:
         jid = Jid((jid.user, jid.host, "vex"))
 
-    mixins = [iqroster.RosterMixin(),
-              iqversion.IqVersionMixin(),
-              entity_time.EntityTimeMixin(),
-              presence.PresenceCacheMixin(),
-              presence.SubscriptionAckMixin(),
-             ]
     try:
         stream = yield from openConnection(Credentials(jid, password),
                                            host=jid.host, port=args.port,
-                                           callbacks=Callbacks(), mixins=mixins,
+                                           callbacks=Callbacks(),
                                            timeout=5)
     except asyncio.TimeoutError:
         print("Connection timed out", file=sys.stderr)
@@ -81,7 +65,7 @@ def main(app):
         return 5
 
     # Server version
-    server_version = yield from iqversion.get(stream, jid.host)
+    server_version = yield from iqversion.get(stream, jid.host, timeout=10)
     _outputXml(server_version)
 
     # Initial presence
@@ -92,8 +76,11 @@ def main(app):
         return 0
 
     while True:
-        stanza = yield from stream.wait(("/*", None), timeout=None)
-        _outputXml(stanza)
+        try:
+            stanza = yield from stream.wait(("/*", None), timeout=10)
+            _outputXml(stanza)
+        except asyncio.TimeoutError:
+            pass
 
     return 0
 
@@ -124,5 +111,16 @@ class Callbacks(ClientStreamCallbacks):
     def streamError(self, stream, error):
         print(("streamError", stream, error))
 
-app = Application(main)
+
+arg_parser = ArgumentParser(
+    description="Simple XMPP client. The user will be prompted for a login "
+                "password unless the environment variable VEX_PASSWD is set.")
+arg_parser.add_argument("jid", help="Jabber ID for login")
+arg_parser.add_argument("--host", help="Alternative server for connecting")
+arg_parser.add_argument("--port", type=int, default=DEFAULT_C2S_PORT,
+                        help="Alternative port for connecting")
+arg_parser.add_argument("--disconnect", action="store_true",
+                        help="Disconnect once stream negotiation completes."
+                       )
+app = Application(main, argument_parser=arg_parser)
 sys.exit(app.run())
