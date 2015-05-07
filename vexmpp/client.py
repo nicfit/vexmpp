@@ -62,7 +62,7 @@ def _resolveHostPort(hostname, port, loop, use_cache=True):
                                                    srvrecord.port, loop)
         _dns_cache[hostname] = resolved_srv
         return resolved_srv
-    except aiodns.error.DNSError as ex:
+    except aiodns.error.DNSError:
         # No SRV, moving on...
         pass
 
@@ -82,7 +82,7 @@ class ClientStream(Stream):
         self.send(stream_stream)
 
         # Server <stream:stream>
-        header = yield from self.wait(StreamHeader.XPATH, timeout)
+        _ = yield from self.wait(StreamHeader.XPATH, timeout)
 
         # Server stream:features
         features = yield from self.wait(StreamFeatures.XPATH, timeout)
@@ -96,7 +96,7 @@ class ClientStream(Stream):
             self._parser_task.reset()
             self.send(StreamHeader(ns=CLIENT_NS_URI, to=self.creds.jid.host))
             # Server <stream:stream>
-            header = yield from self.wait(StreamHeader.XPATH, timeout)
+            _ = yield from self.wait(StreamHeader.XPATH, timeout)
             # Server stream:features
             features = yield from self.wait(StreamFeatures.XPATH, timeout)
 
@@ -112,7 +112,7 @@ class ClientStream(Stream):
         self.send(StreamHeader(ns=CLIENT_NS_URI, to=self.creds.jid.host))
 
         # Server <stream:stream>
-        header = yield from self.wait(StreamHeader.XPATH, timeout)
+        _ = yield from self.wait(StreamHeader.XPATH, timeout)
 
         # Server stream:features
         features = yield from self.wait(StreamFeatures.XPATH, timeout)
