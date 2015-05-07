@@ -40,7 +40,7 @@ clean-patch:
 	find . -name '*.orig' -exec rm -f '{}' \;
 
 lint:
-	flake8 vexmpp tests bin
+	flake8 vexmpp tests bin botch
 
 test:
 	nosetests
