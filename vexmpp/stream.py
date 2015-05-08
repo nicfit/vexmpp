@@ -82,6 +82,8 @@ class Stream(asyncio.Protocol):
 
         self._parser_task = ParserTask(self)
         self.default_timeout = default_timeout
+        # Stream errors
+        self.error = None
 
     @property
     def connected(self):

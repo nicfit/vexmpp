@@ -5,12 +5,11 @@ import configparser
 
 from vexmpp.application import Application
 from vexmpp.utils import ArgumentParser, xpathFilter
-from vexmpp.core import openConnection
-from vexmpp.client import Credentials, ClientStreamCallbacks
 from vexmpp.log import DEFAULT_LOGGING_CONFIG
 from vexmpp.stanzas import Presence
 from vexmpp.protocols import presence
-from vexmpp import stream
+from vexmpp.stream import Mixin
+from vexmpp.client import Credentials, ClientStreamCallbacks, ClientStream
 
 APP_NAME = "botch"
 CONFIG_SECT = APP_NAME
@@ -26,17 +25,17 @@ password = password
 
 class Botch(Application):
     def __init__(self):
-        super().__init__(app_name=APP_NAME)
-
-        self.arg_parser = ArgumentParser(
+        argp = ArgumentParser(
+                prog=APP_NAME,
                 description="Personal XMPP bot.",
                 config_opts=ArgumentParser.ConfigOpt.argument,
                 config_required=True,
                 sample_config=EXAMPLE_CONFIG)
+        super().__init__(app_name=APP_NAME, argument_parser=argp)
 
     @asyncio.coroutine
     def _initBot(self):
-        bot = yield from openConnection(
+        bot = yield from ClientStream.connect(
                 Credentials(self.config.get(CONFIG_SECT, "jid"),
                             self.config.get(CONFIG_SECT, "password")),
                 callbacks=Callbacks(self),
@@ -105,7 +104,7 @@ class Callbacks(ClientStreamCallbacks):
 
 
 # FIXME: unused
-class SubscriptionMixin(stream.Mixin):
+class SubscriptionMixin(Mixin):
     '''Honors subscription requests from root_jid, denies all others.'''
     def __init__(self, root_jid):
         super().__init__()
