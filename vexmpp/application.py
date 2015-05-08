@@ -17,7 +17,7 @@ class Application(object):
         self._entry_point = user_func if user_func else self._main
         self._exit_status = 0
         self.log = logging.getLogger(app_name) if app_name else log
-        self.arg_parser = argument_parser or ArgumentParser()
+        self.arg_parser = argument_parser or ArgumentParser(prog=app_name)
         self.args = None
 
     @asyncio.coroutine
