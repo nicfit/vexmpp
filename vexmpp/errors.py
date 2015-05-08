@@ -58,6 +58,10 @@ Concrete :code:StreamError types.
 '''
 
 
+class Error(RuntimeError):
+    '''A generatl exception type for errors in the vexmpp domain.'''
+
+
 TYPE_AUTH = "auth"
 TYPE_CANCEL = "cancel"
 TYPE_CONTINUE = "continue"
@@ -278,6 +282,12 @@ def _makeConcreteError(xml):
     elif xml.tag == "error":
         stanza_error = True
         cond_tag_prefix = "{%s}" % STANZA_ERROR_NS_URI
+    elif (xml.getchildren() and
+            xml.getchildren()[0].tag.startswith("{%s}" % STANZA_ERROR_NS_URI)):
+        # Many stream features will wrap a stranza error in a feature-specific
+        # parent (xep 198, <failed>, e.g.).
+        stanza_error = True
+        cond_tag_prefix = "{%s}" % STANZA_ERROR_NS_URI
     else:
         raise ValueError("xml must be a stream:error or stanza error (no ns!)")
 
@@ -289,7 +299,7 @@ def _makeConcreteError(xml):
                                           else None
         elif child.tag.startswith(cond_tag_prefix):
             cond = child
-            if stanza_error:
+            if stanza_error and "type" in xml.attrib:
                 type_ = xml.attrib["type"]
         else:
             app_err = child

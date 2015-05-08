@@ -109,6 +109,13 @@ class Stream(asyncio.Protocol):
             self._transport.close()
 
     def send(self, data):
+        '''Send ``data`` which can be a vexmpp.stanza.Stanza,
+         lxml.etree.Element, a str, or bytes. The the case of bytes the
+         encoding MUST be utf-8 encoded (per XMPP specification).
+
+         In the case of Stanza and Element the Mixin.onSend callback is
+         invoked. Currently there is not a Mixin callback for strings or bytes.
+        '''
         def _send(bytes_):
             if not self._transport:
                 log.warn("Data send with disconnected transport")
@@ -117,14 +124,23 @@ class Stream(asyncio.Protocol):
             self._transport.write(bytes_)
             log.debug("[BYTES OUT]: %s", bytes_)
 
+        stanza = None
         if isinstance(data, stanzas.Stanza):
+            stanza = data
             _send(data.toXml())
         elif isinstance(data, str):
             _send(data.encode("utf-8"))
         elif isinstance(data, etree._Element):
+            stanza = stanzas.Stanza(xml=data)
             _send(etree.tostring(data, encoding="utf-8"))
-        else:
+        elif isinstance(data, bytes):
             _send(data)
+        else:
+            raise ValueError("Unable to send type {}".format(type(data)))
+
+        if stanza:
+            for m in self._mixins:
+                m.onSend(self, stanza)
 
     @asyncio.coroutine
     def sendAndWaitIq(self, child_ns, to=None, child_name="query", type="get",
@@ -261,6 +277,10 @@ class Mixin(object):
         See :func:`vexmpp.utils.xpathFilter` for a decorator that can filter
         only the stanzas the implementation is interested in.
         '''
+        pass
+
+    def onSend(self, stream, stanza):
+        '''Called for each outgoing stanza.'''
         pass
 
 
