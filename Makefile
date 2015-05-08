@@ -1,5 +1,6 @@
 .PHONY: clean-pyc clean-build clean-patch docs clean help lint test test-all \
-        coverage docs release dist maintainer-clean
+        coverage docs release dist maintainer-clean tags
+SRC_DIRS = vexmpp tests bin botch
 
 help:
 	@echo "clean - remove all build, test, coverage and Python artifacts"
@@ -40,7 +41,7 @@ clean-patch:
 	find . -name '*.orig' -exec rm -f '{}' \;
 
 lint:
-	flake8 vexmpp tests bin botch
+	flake8 ${SRC_DIRS}
 
 test:
 	nosetests
@@ -72,6 +73,6 @@ dist: clean
 	ls -l dist
 
 tags:
-	ctags -R ./vexmpp
+	ctags -R ${SRC_DIRS}
 
 maintainer-clean: clean
