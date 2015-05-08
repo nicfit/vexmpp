@@ -6,7 +6,7 @@ TODO
      See tigace.im login
    - Ability to do TLS with immediate handshake (443, 5223, etc.)
    - Remove callback methods that are not async (connectionFailed is the
-     same as the exceptions raised by openConnection, e.g.). Rethink...
+     same as the exceptions raised by ClientStream.connect, e.g.). Rethink...
      use asyncio.Event???
    - timeouts in protocol functions
    - login-stress
