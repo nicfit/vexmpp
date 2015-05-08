@@ -254,7 +254,8 @@ class Stream(asyncio.Protocol):
 
     @default_timeout.setter
     def default_timeout(self, t):
-        t = int(t) or None
+        if t is not None:
+            t = int(t)
         self._default_timeout = t
 
 
