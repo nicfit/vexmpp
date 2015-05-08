@@ -2,6 +2,8 @@ TODO
 ----
 
 - Important
+   - DiscoMixin needs to be more resilnant to errors (not leak the XmppError)
+     See tigace.im login
    - Ability to do TLS with immediate handshake (443, 5223, etc.)
    - Remove callback methods that are not async (connectionFailed is the
      same as the exceptions raised by openConnection, e.g.). Rethink...
