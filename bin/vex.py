@@ -19,11 +19,10 @@ except:
 from vexmpp.jid import Jid
 from vexmpp.errors import XmppError
 from vexmpp.application import Application
-from vexmpp.core import openConnection
-from vexmpp.client import (Credentials, DEFAULT_C2S_PORT,
-                           ClientStreamCallbacks)
+from vexmpp.client import (Credentials, DEFAULT_C2S_PORT, ClientStream,
+                           ClientStreamCallbacks, TlsOpts)
 from vexmpp.stanzas import Presence
-from vexmpp.protocols import iqversion
+from vexmpp.protocols import iqversion, stream_mgmt
 from vexmpp.utils import ArgumentParser
 
 
@@ -46,16 +45,25 @@ def main(app):
     if not jid.resource:
         jid = Jid((jid.user, jid.host, "vex"))
 
+    tls_opt = TlsOpts.fromString(args.tls)
+
+    mixins = ClientStream.createDefaultMixins()
+    if args.stream_mgmt:
+        sm_opts = stream_mgmt.Opts()
+        mixins.insert(0, stream_mgmt.Mixin(sm_opts))
+
     try:
-        stream = yield from openConnection(Credentials(jid, password),
-                                           host=jid.host, port=args.port,
-                                           callbacks=Callbacks(),
-                                           timeout=5)
+        stream = yield from ClientStream.connect(Credentials(jid, password),
+                                                 host=jid.host, port=args.port,
+                                                 callbacks=Callbacks(),
+                                                 tls_opt=tls_opt,
+                                                 mixins=mixins,
+                                                 timeout=5)
     except asyncio.TimeoutError:
         print("Connection timed out", file=sys.stderr)
         return 1
     except XmppError as ex:
-        print("Authentication error: %s" % str(ex), file=sys.stderr)
+        print("XMPP error: %s" % str(ex), file=sys.stderr)
         return 2
     except OpenSSL.SSL.Error as ex:
         print("SSL error: %s" % str(ex), file=sys.stderr)
@@ -122,5 +130,11 @@ arg_parser.add_argument("--port", type=int, default=DEFAULT_C2S_PORT,
 arg_parser.add_argument("--disconnect", action="store_true",
                         help="Disconnect once stream negotiation completes."
                        )
+arg_parser.add_argument("--tls", action="store",
+                        default="on", choices=[e.name for e in TlsOpts],
+                        help="TLS setting, 'on' by default.")
+arg_parser.add_argument("--stream-mgmt", action="store_true", default=False,
+                        help="Enable stream management (XEP 198).")
+
 app = Application(main, argument_parser=arg_parser)
 sys.exit(app.run())
