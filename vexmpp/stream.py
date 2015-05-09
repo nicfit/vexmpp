@@ -11,20 +11,14 @@ from . import stanzas
 from .stanzas import Iq
 from .parser import Parser
 from .utils import signalEvent
+from .utils import benchmark as timedWait
 
 
 if "VEX_TIMED_WAITS" in os.environ and int(os.environ["VEX_TIMED_WAITS"]):
-    from .utils import benchmark as timedWait
     from .metrics import ValueMetric
     stream_wait_met = ValueMetric("stream:wait_time", type_=float)
 else:
     stream_wait_met = None
-    class timedWait:
-        '''no-op context manager'''
-        def __enter__(self):
-            return None
-        def __exit__(self, ty, val, tb):
-            return False
 
 _ENFORCE_TIMEOUTS = bool("VEX_ENFORCE_TIMEOUTS" in os.environ and
                          int(os.environ["VEX_ENFORCE_TIMEOUTS"]))
@@ -186,13 +180,19 @@ class Stream(asyncio.Protocol):
         if _ENFORCE_TIMEOUTS and not timeout:
             raise RuntimeError("Timeout not set error")
 
-        queue = asyncio.JoinableQueue()
+        queue = asyncio.JoinableQueue(maxsize=1)
         self._waiter_queues.append(queue)
 
+        timer_stat = None
         while True:
             try:
+                if timer_stat and timeout is not None:
+                    # Already waited at least once, update timeout
+                    timeout = max(timeout - timer_stat["total"], 0.0)
+
                 with timedWait() as timer_stat:
                     stanza = yield from asyncio.wait_for(queue.get(), timeout)
+
                 if stream_wait_met:
                     stream_wait_met.update(timer_stat["total"])
                     log.debug("Stream wait - time: {:.3f} "
@@ -200,6 +200,7 @@ class Stream(asyncio.Protocol):
                            .format(stream_wait_met.value,
                                    stream_wait_met.min, stream_wait_met.max,
                                    stream_wait_met.average))
+
             except asyncio.TimeoutError as ex:
                 raise asyncio.TimeoutError(
                   "Timeout ({}s) while waiting for xpaths: {}".format(timeout,
@@ -209,6 +210,7 @@ class Stream(asyncio.Protocol):
                     self._waiter_queues.remove(queue)
                     queue.task_done()
                     return stanza
+
             queue.task_done()
 
     # asyncio.Protocol implementation
@@ -233,8 +235,7 @@ class Stream(asyncio.Protocol):
 
         if self._waiter_queues:
             for q in self._waiter_queues:
-                q.put_nowait(stanza)
-                yield from q.join()
+                yield from q.put(stanza)
 
     # asyncio.Protocol implementation
     def data_received(self, data):
