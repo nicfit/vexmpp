@@ -12,7 +12,7 @@ from .stream import Stream, StreamCallbacks
 from .errors import Error
 from .utils import signalEvent
 from .namespaces import CLIENT_NS_URI
-from .stanzas import StreamHeader, StreamFeatures
+from .stanzas import StreamHeader, StreamFeatures, Presence
 from .ssl_transport import create_starttls_connection
 from .features import sasl, bind, starttls, stream_mgmt
 from .protocols import (resourcebind, iqroster, presence, iqversion,
@@ -232,6 +232,9 @@ class ClientStream(Stream):
                 presence.SubscriptionAckMixin(),
                 disco.DiscoCacheMixin(),
                ]
+
+    def sendPresence(self):
+        self.send(Presence())
 
 
 class ClientStreamCallbacks(StreamCallbacks):

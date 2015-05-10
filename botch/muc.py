@@ -3,6 +3,7 @@ import asyncio
 import logging
 
 from vexmpp.protocols import muc
+from .app import APP_NAME
 
 log = logging.getLogger(__name__)
 
@@ -13,7 +14,8 @@ def task(config, bot):
     for jid in [muc.Jid(j) for j in config["muc"].get("rooms").split()]:
         # Join rooms
         if not jid.nick:
-            jid = muc.Jid("{}/{}".format(jid.bare,  "botch"))
+            jid = muc.Jid("{}/{}".format(jid.bare,  APP_NAME))
+
         log.info("Joining MUC room {}...".format(jid.full))
         yield from muc.enterRoom(bot, jid.room, jid.host, jid.nick,
                                  timeout=bot.default_timeout)

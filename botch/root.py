@@ -31,6 +31,7 @@ def task(config, bot):
                         ("/*[contains(@from, '%s')]" % root_jid.bare,
                          None),
                         timeout=bot.default_timeout)
-            print("ROOT!\n" + stanza.toXml().decode())
+            log.debug("Root task received:\n{}".
+                      format(stanza.toXml(pprint=True).decode()))
         except asyncio.TimeoutError:
             pass

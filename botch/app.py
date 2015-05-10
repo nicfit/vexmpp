@@ -6,7 +6,6 @@ import configparser
 from vexmpp.application import Application
 from vexmpp.utils import ArgumentParser, xpathFilter
 from vexmpp.log import DEFAULT_LOGGING_CONFIG
-from vexmpp.stanzas import Presence
 from vexmpp.protocols import presence
 from vexmpp.stream import Mixin
 from vexmpp.client import Credentials, ClientStreamCallbacks, ClientStream
@@ -43,7 +42,7 @@ class Botch(Application):
 
         self.log.info("Connected")
 
-        bot.send(Presence())
+        bot.sendPresence()
         self.log.info("Alive!")
 
         return bot
@@ -90,7 +89,7 @@ class Botch(Application):
         while True:
             try:
                 stanza = yield from self.bot.wait(("/*", None), timeout=60)
-                self.log.verbose(stanza.toXml())
+                self.log.info(stanza.toXml(pprint=True).decode())
             except asyncio.TimeoutError:
                 pass
 

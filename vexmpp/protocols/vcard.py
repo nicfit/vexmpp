@@ -17,6 +17,7 @@ def get(stream, to, timeout=None):
     iq = yield from stream.sendAndWaitIq(NS_URI, to=to, child_name="vCard",
                                          raise_on_error=True, id_prefix="vcard",
                                          timeout=timeout)
+    # TODO: ensure vCard child
     return iq
 
 
@@ -26,4 +27,6 @@ def set(stream, to, vcard_xml, timeout=None):
     iq.xml.append(vcard_xml)
     iq = yield from stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
     return iq
+
+# TODO: vCard builder 
 
