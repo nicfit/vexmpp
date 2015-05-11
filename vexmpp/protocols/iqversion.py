@@ -19,6 +19,7 @@ GET_XPATH = ("/iq[@type='get']/ns:query", {"ns": NS_URI})
 @asyncio.coroutine
 def get(stream, to, timeout=None):
     iq = yield from stream.sendAndWaitIq(NS_URI, to=to, raise_on_error=True,
+                                         id_prefix="version_get",
                                          timeout=timeout)
     return iq
 
