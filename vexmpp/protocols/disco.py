@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 import asyncio
+import logging
 from collections import UserDict
 
 from .. import stream
 from ..jid import Jid
 from ..stanzas import Iq
+from ..errors import XmppError
 
 '''XEP 30'''
+
+log = logging.getLogger(__name__)
 
 NS_URI_BASE  = "http://jabber.org/protocol/disco"
 NS_URI_INFO  = "{}#info".format(NS_URI_BASE)
@@ -15,14 +19,15 @@ NS_URI_ITEMS = "{}#items".format(NS_URI_BASE)
 
 @asyncio.coroutine
 def getInfo(stream, to, node=None, timeout=None):
-    iq = Iq(to=to, request=("query", NS_URI_INFO), attrs={"node": node})
+    iq = Iq(to=to, request=("query", NS_URI_INFO), attrs={"node": node},
+            id_prefix="disco#info_get")
     return (yield from stream.sendAndWait(iq, raise_on_error=True,
                                           timeout=timeout))
 
 
 @asyncio.coroutine
 def getItems(stream, to, node=None, timeout=None):
-    iq = Iq(to=to, request=("query", NS_URI_ITEMS))
+    iq = Iq(to=to, request=("query", NS_URI_ITEMS), id_prefix="disco#items_get")
     if node:
         iq._setAttr("node", node)
 
@@ -96,7 +101,11 @@ class DiscoCacheMixin(stream.Mixin):
         # item)
         if disco_info and disco_info.items is not None:
             for jid in disco_info.items:
-                yield from self._disco(stream, jid, False)
+                try:
+                    yield from self._disco(stream, jid, False)
+                except XmppError as ex:
+                    log.warn("Stanza error while disco'ing item '{}': {}"
+                             .format(jid.full, ex))
 
     @asyncio.coroutine
     def _disco(self, stream, jid, fetch_items):
