@@ -241,7 +241,7 @@ class Stream(asyncio.Protocol):
             yield from m.onStanza(self, stanza)
 
         if self._waiter_queues:
-            for q in self._waiter_queues:
+            for q in list(self._waiter_queues):
                 yield from q.put(stanza)
                 yield from q.join()
 
