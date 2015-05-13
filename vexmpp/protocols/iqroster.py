@@ -20,7 +20,7 @@ GROUP_TAG = "{%s}group" % NS_URI
 @asyncio.coroutine
 def get(stream, timeout=None):
     iq = yield from stream.sendAndWaitIq(NS_URI, timeout=timeout,
-                                         id_prefix="roster:get",
+                                         id_prefix="roster_get",
                                          raise_on_error=True)
     return iq
 
@@ -28,7 +28,7 @@ def get(stream, timeout=None):
 @asyncio.coroutine
 def add(stream, jid, name=None, groups=None, timeout=None):
     '''Add a new roster item.'''
-    iq = Iq(type="set", request=("query", NS_URI), id_prefix="roster:add")
+    iq = Iq(type="set", request=("query", NS_URI), id_prefix="roster_add")
     iq.query.append(RosterItem(jid=jid, name=name, groups=groups).xml)
 
     iq = yield from stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
@@ -44,7 +44,7 @@ def update(stream, jid, name=None, groups=None, timeout=None):
 
 @asyncio.coroutine
 def remove(stream, jid, timeout=None):
-    iq = Iq(type="set", request=("query", NS_URI), id_prefix="roster:rem")
+    iq = Iq(type="set", request=("query", NS_URI), id_prefix="roster_rem")
     iq.query.append(RosterItem(jid=jid, subscription="remove").xml)
 
     iq = yield from stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)

@@ -278,26 +278,26 @@ def _makeConcreteError(xml):
     stream_error, stanza_error = False, False
     if xml.xpath("/stream:error", namespaces={"stream": STREAM_NS_URI}):
         stream_error = True
-        cond_tag_prefix = "{%s}" % STREAM_ERROR_NS_URI
+        error_ns = STREAM_ERROR_NS_URI
     elif xml.tag == "error":
         stanza_error = True
-        cond_tag_prefix = "{%s}" % STANZA_ERROR_NS_URI
+        error_ns = STANZA_ERROR_NS_URI
     elif (xml.getchildren() and
             xml.getchildren()[0].tag.startswith("{%s}" % STANZA_ERROR_NS_URI)):
         # Many stream features will wrap a stranza error in a feature-specific
         # parent (xep 198, <failed>, e.g.).
         stanza_error = True
-        cond_tag_prefix = "{%s}" % STANZA_ERROR_NS_URI
+        error_ns = STANZA_ERROR_NS_URI
     else:
         raise ValueError("xml must be a stream:error or stanza error (no ns!)")
 
     cond, type_, text, lang, app_err = None, None, None, None, None
     for child in list(xml):
-        if child.tag == "{%s}text" % STREAM_ERROR_NS_URI and child.text:
+        if child.tag == "{%s}text" % error_ns and child.text:
             text = child.text
             lang = child.attrib[XML_LANG] if XML_LANG in child.attrib \
                                           else None
-        elif child.tag.startswith(cond_tag_prefix):
+        elif child.tag.startswith("{%s}" % error_ns):
             cond = child
             if stanza_error and "type" in xml.attrib:
                 type_ = xml.attrib["type"]
