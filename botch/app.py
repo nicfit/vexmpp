@@ -4,13 +4,12 @@ import logging
 import configparser
 from pathlib import Path
 
-from vexmpp.application import Application
-from vexmpp.utils import ArgumentParser, xpathFilter
-from vexmpp.log import DEFAULT_LOGGING_CONFIG
-from vexmpp.protocols import presence
 from vexmpp.stream import Mixin
+from vexmpp.protocols import presence
+from vexmpp.application import Application
+from vexmpp.log import DEFAULT_LOGGING_CONFIG
+from vexmpp.utils import ArgumentParser, xpathFilter
 from vexmpp.client import Credentials, ClientStreamCallbacks, ClientStream
-
 from . import plugin
 
 log = logging.getLogger(__name__)
@@ -121,11 +120,13 @@ class Botch(Application):
 
     @asyncio.coroutine
     def _reactorTask(self):
-        self.log.debug("_reactorTask")
         while True:
             try:
-                stanza = yield from self.bot.wait(("/*", None), timeout=60)
-                self.log.debug(stanza.toXml(pprint=True).decode())
+                self.log.debug("_reactorTask waiting for stanza")
+                stanza = yield from self.bot.wait(("/message", None),
+                                                  timeout=10)
+                self.log.info("Message [from: {}]: {}"
+                              .format(stanza.frm, stanza.body))
             except asyncio.TimeoutError:
                 pass
 
