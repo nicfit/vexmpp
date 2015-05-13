@@ -74,7 +74,7 @@ class Application(object):
         try:
             self.event_loop.run_until_complete(self._main_task)
         except KeyboardInterrupt:
-            log.warn("Interrupted")
+            log.debug("Interrupted")
             self._main_task.cancel()
 
         log.debug("Application::run returning %d" % self._exit_status)

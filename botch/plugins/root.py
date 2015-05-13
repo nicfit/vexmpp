@@ -6,10 +6,12 @@ from vexmpp.jid import Jid
 
 from botch.plugin import Plugin
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("botch.plugins.root")
 
 
 class RootPlugin(Plugin):
+    CONFIG_SECT = "root"
+
     @asyncio.coroutine
     def activate(self, bot):
         self.root_jid = Jid(self.config["root"].get("jid")).bare_jid
@@ -34,7 +36,7 @@ class RootPlugin(Plugin):
                             ("/*[contains(@from, '%s')]" % self.root_jid.bare,
                              None),
                             timeout=bot.default_timeout)
-                log.debug("Root task received:\n{}".
-                          format(stanza.toXml(pprint=True).decode()))
+                log.verbose("Root task received:\n{}".
+                            format(stanza.toXml(pprint=True).decode()))
             except asyncio.TimeoutError:
                 pass

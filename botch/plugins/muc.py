@@ -7,9 +7,10 @@ from vexmpp.protocols import muc
 from botch.app import APP_NAME
 from botch.plugin import Plugin
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("botch.plugins.muc")
 
 class MucPlugin(Plugin):
+    CONFIG_SECT = "muc"
 
     @asyncio.coroutine
     def activate(self, bot):
