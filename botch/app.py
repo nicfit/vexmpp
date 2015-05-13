@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-
 import asyncio
+import logging
 import configparser
+from pathlib import Path
 
 from vexmpp.application import Application
 from vexmpp.utils import ArgumentParser, xpathFilter
@@ -10,6 +11,9 @@ from vexmpp.protocols import presence
 from vexmpp.stream import Mixin
 from vexmpp.client import Credentials, ClientStreamCallbacks, ClientStream
 
+from . import plugin
+
+log = logging.getLogger(__name__)
 APP_NAME = "botch"
 CONFIG_SECT = APP_NAME
 # FIXME
@@ -40,34 +44,59 @@ class Botch(Application):
                 callbacks=Callbacks(self),
                 timeout=30)
 
-        self.log.info("Connected")
+        self.log.info("Connected {}".format(bot.jid.full))
 
         bot.sendPresence()
         self.log.info("Alive!")
 
         return bot
 
+
+    def _initPlugins(self):
+        plugin_paths = []
+        plugin_paths.append(Path(__file__).parent / "plugins")
+        plugin_paths += [p.strip() for p in self.config[CONFIG_SECT]
+                                                .get("plugin_paths")
+                                                .split("\n")]
+        '''
+        '''
+
+        plugins = {}
+        for PluginClass in plugin.loader(*plugin_paths):
+            try:
+                p = PluginClass(self.config)
+            except:
+                log.exception("Plugin construct error")
+            else:
+                plugins[PluginClass] = p
+        return plugins
+
     @asyncio.coroutine
     def _main(self):
         self.log.info("Botch bot starting...")
         self.config = self.args.config_obj
 
+        '''
+        import signal
+        def _interrupted(signum):
+            log.info("Interrupted {}".format(signum))
+            self.stop()
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            self.event_loop.add_signal_handler(sig, _interrupted, sig)
+        '''
+
         try:
+            self.plugins = self._initPlugins()
             self.bot = yield from self._initBot()
+
+            #import ipdb; ipdb.set_trace()
 
             tasks = []
             task_args = (self.config, self.bot)
             tasks.append(asyncio.async(self._reactorTask()))
 
-            if "root" in self.config:
-                from .root import task as rootTask
-                tasks.append(asyncio.async(rootTask(*task_args)))
-            if "muc" in self.config:
-                from .muc import task as mucTask
-                tasks.append(asyncio.async(mucTask(*task_args)))
-            if "avatar" in self.config:
-                from .tasks.avatar import task as avatarTask
-                tasks.append(asyncio.async(avatarTask(*task_args)))
+            for plugin in self.plugins.values():
+                tasks.append(asyncio.async(plugin.activate(self.bot)))
 
             for done_task in asyncio.as_completed(tasks):
                 try:
