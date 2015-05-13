@@ -57,9 +57,10 @@ class Botch(Application):
     def _initPlugins(self):
         plugin_paths = []
         plugin_paths.append(Path(__file__).parent / "plugins")
-        plugin_paths += [p.strip() for p in self.config[CONFIG_SECT]
-                                                .get("plugin_paths")
-                                                .split("\n")]
+        if "plugin_paths" in self.config[CONFIG_SECT]:
+            plugin_paths += [p.strip() for p in self.config[CONFIG_SECT]
+                                                    .get("plugin_paths")
+                                                    .split("\n")]
 
         plugins = {}
         for PluginClass in plugin.loader(*plugin_paths):
