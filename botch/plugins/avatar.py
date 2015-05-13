@@ -11,10 +11,11 @@ from vexmpp.errors import XmppError
 
 from botch.plugin import Plugin
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("botch.plugins.avatar")
 
 
 class AvatarPlugin(Plugin):
+    CONFIG_SECT = "avatar"
 
     VCARD_PHOTO_XML = '''
     <PHOTO>

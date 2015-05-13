@@ -21,6 +21,8 @@ EXAMPLE_CONFIG = """
 [%s]
 jid = bot@example.com
 password = password
+#plugin_paths = path1
+#               path2
 
 %s
 """ % (CONFIG_SECT, DEFAULT_LOGGING_CONFIG)
@@ -58,11 +60,15 @@ class Botch(Application):
         plugin_paths += [p.strip() for p in self.config[CONFIG_SECT]
                                                 .get("plugin_paths")
                                                 .split("\n")]
-        '''
-        '''
 
         plugins = {}
         for PluginClass in plugin.loader(*plugin_paths):
+            if (PluginClass.CONFIG_SECT and
+                    PluginClass.CONFIG_SECT not in self.config):
+                log.info("'{}' disabled, no [{}] config"
+                         .format(PluginClass.__name__, PluginClass.CONFIG_SECT))
+                continue
+
             try:
                 p = PluginClass(self.config)
             except:
@@ -118,7 +124,7 @@ class Botch(Application):
         while True:
             try:
                 stanza = yield from self.bot.wait(("/*", None), timeout=60)
-                self.log.info(stanza.toXml(pprint=True).decode())
+                self.log.debug(stanza.toXml(pprint=True).decode())
             except asyncio.TimeoutError:
                 pass
 
