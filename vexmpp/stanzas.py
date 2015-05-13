@@ -120,8 +120,14 @@ class Stanza(object):
     def id(self, i):
         self._setAttr("id", i)
 
-    def setId(self, prefix=''):
-        id_str = "%s-" % prefix if prefix else ""
+    def setId(self, prefix=None):
+        id_str = ""
+
+        if prefix and ':' in prefix:
+            raise ValueError("Prefix cannot contain ':'")
+        elif prefix:
+            id_str += "%s:" % prefix
+
         id_str += "%s-" % Stanza._UUID
         id_str += str(Stanza._NEXT_ID)
         Stanza._NEXT_ID += 1

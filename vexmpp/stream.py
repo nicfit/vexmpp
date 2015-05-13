@@ -45,8 +45,9 @@ class ParserTask(asyncio.Task):
                 elems = self._parser.parse(data)
                 for e in elems:
                     stanza = stanzas.makeStanza(e)
-                    log.verbose('[STANZA IN]: %s' %
-                                stanza.toXml(pprint=True).decode("utf-8"))
+                    if log.getEffectiveLevel() <= logging.VERBOSE:
+                        log.verbose("[STANZA IN]:\n%s" %
+                                    stanza.toXml(pprint=True).decode("utf-8"))
                     yield from self._stream._handleStanza(stanza)
         except Exception as ex:
             log.exception(ex)
@@ -123,16 +124,22 @@ class Stream(asyncio.Protocol):
         stanza = None
         if isinstance(data, stanzas.Stanza):
             stanza = data
-            _send(data.toXml())
+            raw_data = data.toXml()
         elif isinstance(data, str):
-            _send(data.encode("utf-8"))
+            raw_data = data.encode("utf-8")
         elif isinstance(data, etree._Element):
             stanza = stanzas.Stanza(xml=data)
-            _send(etree.tostring(data, encoding="utf-8"))
+            raw_data = etree.tostring(data, encoding="utf-8")
         elif isinstance(data, bytes):
-            _send(data)
+            raw_data = data
         else:
             raise ValueError("Unable to send type {}".format(type(data)))
+
+        if stanza and log.getEffectiveLevel() <= logging.VERBOSE:
+            log.verbose("[STANZA OUT]:\n%s" %
+                        stanza.toXml(pprint=True).decode("utf-8"))
+
+        _send(raw_data)
 
         if stanza:
             for m in self._mixins:
@@ -180,7 +187,7 @@ class Stream(asyncio.Protocol):
         if _ENFORCE_TIMEOUTS and not timeout:
             raise RuntimeError("Timeout not set error")
 
-        queue = asyncio.JoinableQueue(maxsize=1)
+        queue = asyncio.JoinableQueue()
         self._waiter_queues.append(queue)
 
         timer_stat = None
@@ -234,8 +241,9 @@ class Stream(asyncio.Protocol):
             yield from m.onStanza(self, stanza)
 
         if self._waiter_queues:
-            for q in self._waiter_queues:
+            for q in list(self._waiter_queues):
                 yield from q.put(stanza)
+                yield from q.join()
 
     # asyncio.Protocol implementation
     def data_received(self, data):
