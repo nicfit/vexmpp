@@ -39,9 +39,10 @@ class ParserTask(asyncio.Task):
 
     @asyncio.coroutine
     def _run(self):
-        try:
-            while True:
+        while True:
+            try:
                 data = yield from self._data_queue.get()
+
                 elems = self._parser.parse(data)
                 for e in elems:
                     stanza = stanzas.makeStanza(e)
@@ -49,9 +50,8 @@ class ParserTask(asyncio.Task):
                         log.verbose("[STANZA IN]:\n%s" %
                                     stanza.toXml(pprint=True).decode("utf-8"))
                     yield from self._stream._handleStanza(stanza)
-        except Exception as ex:
-            log.exception(ex)
-            raise
+            except Exception as ex:
+                log.exception(ex)
 
 
 class Stream(asyncio.Protocol):
@@ -61,7 +61,7 @@ class Stream(asyncio.Protocol):
                  default_timeout=None):
         self.creds = creds
         self._transport = None
-        self._waiter_queues = []
+        self._waiter_futures = []
         self._tls_active = False
         self._callbacks = state_callbacks
 
@@ -187,38 +187,27 @@ class Stream(asyncio.Protocol):
         if _ENFORCE_TIMEOUTS and not timeout:
             raise RuntimeError("Timeout not set error")
 
-        queue = asyncio.JoinableQueue()
-        self._waiter_queues.append(queue)
+        fut = _StreamWaitFuture(xpaths)
+        self._waiter_futures.append(fut)
+        try:
+            with timedWait() as timer_stat:
+                match = yield from asyncio.wait_for(fut, timeout)
 
-        timer_stat = None
-        while True:
-            try:
-                if timer_stat and timeout is not None:
-                    # Already waited at least once, update timeout
-                    timeout = max(timeout - timer_stat["total"], 0.0)
+            if stream_wait_met:
+                stream_wait_met.update(timer_stat["total"])
+                log.debug("Stream wait - time: {:.3f} "
+                          "min/max/avg: {:.6f}/{:.6f}/{:.6f}"
+                          .format(stream_wait_met.value,
+                                  stream_wait_met.min, stream_wait_met.max,
+                                  stream_wait_met.average))
 
-                with timedWait() as timer_stat:
-                    stanza = yield from asyncio.wait_for(queue.get(), timeout)
-
-                if stream_wait_met:
-                    stream_wait_met.update(timer_stat["total"])
-                    log.debug("Stream wait - time: {:.3f} "
-                              "min/max/avg: {:.6f}/{:.6f}/{:.6f}"
-                           .format(stream_wait_met.value,
-                                   stream_wait_met.min, stream_wait_met.max,
-                                   stream_wait_met.average))
-
-            except asyncio.TimeoutError as ex:
-                raise asyncio.TimeoutError(
-                  "Timeout ({}s) while waiting for xpaths: {}".format(timeout,
-                                                                      xpaths))
-            for xp, nsmap in xpaths:
-                if stanza.xml.xpath(xp, namespaces=nsmap):
-                    self._waiter_queues.remove(queue)
-                    queue.task_done()
-                    return stanza
-
-            queue.task_done()
+            return match
+        except asyncio.TimeoutError as ex:
+            raise asyncio.TimeoutError(
+                    "Timeout ({}s) while waiting for xpaths: {}"
+                    .format(timeout, xpaths)) from ex
+        finally:
+            self._waiter_futures.remove(fut)
 
     # asyncio.Protocol implementation
     def connection_made(self, transport, tls=False):
@@ -237,13 +226,19 @@ class Stream(asyncio.Protocol):
             self._transport.close()
             return
 
-        for m in self._mixins:
-            yield from m.onStanza(self, stanza)
+        if self._waiter_futures:
+            for fut in list(self._waiter_futures):
+                matched = fut.matchStanza(stanza)
+                if matched:
+                    # Yield the event loop, which is essential for a handle
+                    # and wait in quick succession.
+                    yield from asyncio.sleep(0)
 
-        if self._waiter_queues:
-            for q in list(self._waiter_queues):
-                yield from q.put(stanza)
-                yield from q.join()
+        for m in self._mixins:
+            try:
+                yield from m.onStanza(self, stanza)
+            except:
+                log.exception("{} mixin error".format(m.__class__.__name__))
 
     # asyncio.Protocol implementation
     def data_received(self, data):
@@ -303,4 +298,18 @@ class StreamCallbacks:
         pass
     def streamError(self, stream, error):
         pass
+
+
+class _StreamWaitFuture(asyncio.Future):
+    def __init__(self, xpaths, *args, loop=None):
+        super().__init__(*args, loop=loop)
+        self._xpaths = xpaths
+
+    def matchStanza(self, stanza):
+        for xp, nsmap in self._xpaths:
+            if stanza.xml.xpath(xp, namespaces=nsmap):
+                self.set_result(stanza)
+                log.debug("Matched xpath {}".format((xp, nsmap)))
+                return True
+        return False
 
