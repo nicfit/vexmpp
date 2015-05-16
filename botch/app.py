@@ -42,7 +42,7 @@ class Botch(Application):
         bot = yield from ClientStream.connect(
                 Credentials(self.config.get(CONFIG_SECT, "jid"),
                             self.config.get(CONFIG_SECT, "password")),
-                callbacks=Callbacks(self),
+                state_callbacks=Callbacks(self),
                 timeout=30)
 
         self.log.info("Connected {}".format(bot.jid.full))
