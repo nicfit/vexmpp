@@ -34,20 +34,21 @@ def _outputXml(stanza):
     print(xml)
 
 
+class RegistrationError(Exception):
+    pass
+
+
 def _register(creds, reg_query):
-    '''TODO: Handle no xdata username/password
-    e.g. lightwitch.org returns:
-    <query xmlns="jabber:iq:register">
-      <instructions>Please visit http://www.lightwitch.org/xmpp/register to register an account on this server.</instructions>
-      <x xmlns="jabber:x:oob">
-        <url>http://www.lightwitch.org/xmpp/register</url>
-      </x>
-    </query>
-    '''
     def _appendValue(elem, value_txt):
         value_elem = etree.Element("value")
         value_elem.text = value_txt
         elem.append(value_elem)
+
+    oob = reg_query.find("{jabber:x:oob}x")
+    if oob is not None:
+        inst = reg_query.find("{%s}instructions" % iqregister.NS_URI)
+        url = oob.find("{jabber:x:oob}url")
+        raise RegistrationError("{}\nurl: {}".format(inst.text, url.text))
 
     xdata = reg_query.find("{jabber:x:data}x")
     if xdata is not None:
@@ -119,6 +120,9 @@ def main(app):
     except aiodns.error.DNSError as ex:
         print("DNS resolution failure.", file=sys.stderr)
         return 5
+    except RegistrationError as ex:
+        print("Registration error:\n{}".format(ex), file=sys.stderr)
+        return 6
 
     # Server version
     server_version = yield from iqversion.get(stream, jid.host, timeout=10)
@@ -142,30 +146,28 @@ def main(app):
 
 
 class Callbacks(ClientStreamCallbacks):
-
     def disconnected(self, stream, reason):
-        print(("disconnected", stream, reason))
-        self._shutdown()
+        self._shutdown("Disconnected: {}".format(reason))
 
     def connectionFailed(self, host, port, reason):
-        print(("connectionFailed", host, port, reason))
-        self._shutdown()
+        self._shutdown("Connection failed: {}".format(reason))
 
-    def _shutdown(self):
+    def _shutdown(self, msg):
         global app
+        print(msg, file.sys.stderr)
         app.event_loop.stop()
 
     def connecting(self, host, port):
-        print(("connecting", host, port))
+        pass
 
     def sessionStarted(self, stream):
-        print(("sessionStarted", stream))
+        pass
 
     def connected(self, stream, tls_active):
-        print(("connected", stream, tls_active))
+        pass
 
     def streamError(self, stream, error):
-        print(("streamError", stream, error))
+        self._shutdown("Stream error: {}".format(error))
 
 
 arg_parser = ArgumentParser(

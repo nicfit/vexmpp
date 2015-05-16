@@ -1,6 +1,7 @@
 TODO
 ----
 - make raise_on_error deafult to True
+- tests resolveHostPort caching
 
 - Important
    - DiscoMixin needs to be more resilnant to errors (not leak the XmppError)
@@ -30,12 +31,5 @@ TODO
 
 Public Servers
 ---------------
-
-   x jabber.org - Isode M-Link
-   x im.koderoot.net - Prosody
-   x chrome.pl - jabberd2
-   x wtfismyip.com - ejabberd
-   x jabber.nicfit.net - XCP
-   x tigase.im - Tigase
    - jabber.iitsp.com - Openfire  (web registration)
    - lightwitch.org - Metronome   (web registration)
