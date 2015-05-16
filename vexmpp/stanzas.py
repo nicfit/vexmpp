@@ -157,6 +157,12 @@ class Stanza(object):
         if tmp_to:
             self.frm = tmp_to
 
+    def x(self, ns):
+        return self.xml.find("{%s}x" % ns)
+
+    def find(self, *args, **kwargs):
+        return self.xml.find(*args, **kwargs)
+
 
 class StreamHeader(Stanza):
     XPATH = ("/stream:stream", {"stream": STREAM_NS_URI})
