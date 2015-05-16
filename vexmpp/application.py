@@ -84,5 +84,6 @@ class Application(object):
         log.debug("Application::stop(exit_status=%d)" % exit_status)
 
         self._exit_status = exit_status
+        self._main_task.cancel()
         self.event_loop.stop()
         logging.shutdown()

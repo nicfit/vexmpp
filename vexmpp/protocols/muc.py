@@ -10,10 +10,12 @@ http://xmpp.org/extensions/xep-0045.html
 '''
 
 NS_URI = "http://jabber.org/protocol/muc"
+JINC_NS_URI = "http://www.jabber.com/protocol/muc"
 NS_URI_ADMIN = "%s#admin"  % NS_URI
 NS_URI_OWNER = "%s#owner"  % NS_URI
 NS_URI_UNIQUE = "%s#unique" % NS_URI
 NS_URI_USER = "%s#user"   % NS_URI
+JINC_NS_URI_HISTORY = "%s#history" % JINC_NS_URI
 NS_CONFERENCE_URI = "jabber:x:conference"
 
 

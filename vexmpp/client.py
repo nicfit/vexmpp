@@ -94,6 +94,8 @@ class ClientStream(Stream):
         if self._register_cb:
             reg_form = yield from iqregister.getForm(self)
 
+            self._register_cb(self.creds, reg_form.query)
+
             reg_form.type = "set"
             reg_form.swapToFrom()
             reg_form.setId()
