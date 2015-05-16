@@ -3,6 +3,9 @@ TODO
 - make raise_on_error deafult to True
 - tests resolveHostPort caching
 
+Botch:
+    - Log level commandm Comand API
+
 - Important
    - DiscoMixin needs to be more resilnant to errors (not leak the XmppError)
      See tigace.im login

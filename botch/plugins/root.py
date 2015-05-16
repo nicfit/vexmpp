@@ -3,6 +3,9 @@ import asyncio
 import logging
 
 from vexmpp.jid import Jid
+from vexmpp.stream import Mixin
+from vexmpp.utils import xpathFilter
+from vexmpp.protocols import presence
 
 from botch.plugin import Plugin
 
@@ -40,3 +43,21 @@ class RootPlugin(Plugin):
                             format(stanza.toXml(pprint=True).decode()))
             except asyncio.TimeoutError:
                 pass
+
+
+# FIXME: unused
+class SubscriptionMixin(Mixin):
+    '''Honors subscription requests from root_jid, denies all others.'''
+    def __init__(self, root_jid):
+        super().__init__()
+        self.root_jid = root_jid
+        self.yes = presence.SubscriptionAckMixin()
+        self.no = presence.DenySubscriptionAckMixin()
+
+    @xpathFilter(presence.S10N_XPATHS)
+    @asyncio.coroutine
+    def onStanza(self, stream, stanza):
+        if stanza.frm.bare_jid == self.root_jid.bare:
+            yield from self.yes.onStanza(stream, stanza)
+        else:
+            yield from self.no.onStanza(stream, stanza)
