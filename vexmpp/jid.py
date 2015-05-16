@@ -22,6 +22,10 @@ class Jid(object):
             (self._local_part,
              self._domain_part,
              self._rsrc_part) = _prep(*j)
+        elif issubclass(j.__class__, Jid):
+            (self._local_part,
+             self._domain_part,
+             self._rsrc_part) = (j._local_part, j._domain_part, j._rsrc_part)
         else:
             raise ValueError("Type must be str or "
                              "tuple(str, str, str). "
