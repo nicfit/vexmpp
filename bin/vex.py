@@ -7,6 +7,7 @@ from getpass import getpass
 
 import aiodns
 import OpenSSL.SSL
+from lxml import etree
 
 try:
     from pygments import highlight
@@ -22,7 +23,7 @@ from vexmpp.application import Application
 from vexmpp.client import (Credentials, DEFAULT_C2S_PORT, ClientStream,
                            ClientStreamCallbacks, TlsOpts)
 from vexmpp.stanzas import Presence
-from vexmpp.protocols import iqversion, stream_mgmt
+from vexmpp.protocols import iqversion, stream_mgmt, iqregister
 from vexmpp.utils import ArgumentParser
 
 
@@ -31,6 +32,51 @@ def _outputXml(stanza):
     if _has_pygments:
         xml = highlight(xml, XmlLexer(), TerminalFormatter())
     print(xml)
+
+
+def _register(creds, reg_query):
+    '''TODO: Handle no xdata username/password
+    e.g. lightwitch.org returns:
+    <query xmlns="jabber:iq:register">
+      <instructions>Please visit http://www.lightwitch.org/xmpp/register to register an account on this server.</instructions>
+      <x xmlns="jabber:x:oob">
+        <url>http://www.lightwitch.org/xmpp/register</url>
+      </x>
+    </query>
+    '''
+    def _appendValue(elem, value_txt):
+        value_elem = etree.Element("value")
+        value_elem.text = value_txt
+        elem.append(value_elem)
+
+    xdata = reg_query.find("{jabber:x:data}x")
+    if xdata is not None:
+        username = xdata.find("{jabber:x:data}field[@var='username']")
+        _appendValue(username, creds.jid.user)
+
+        password = xdata.find("{jabber:x:data}field[@var='password']")
+        _appendValue(password, creds.password)
+
+        title = xdata.find("{jabber:x:data}title")
+        if title is not None:
+            text = title.text
+            print("{:^80}\n{hr:^80}".format(text, hr=("=" * len(text))))
+        inst = xdata.find("{jabber:x:data}instructions")
+        print("Instructions:\n\t{}\n".format(inst.text)
+                if inst is not None else "", end="")
+        for field in xdata.findall("{jabber:x:data}field"):
+            if field.get("var") in ("username", "password"):
+                continue
+
+            print("{}: ".format(field.get("label") or field.get("var")),
+                    end="")
+            #import ipdb; ipdb.set_trace()
+            raise NotImplementedError()
+    else:
+        username = reg_query.find("{%s}username" % iqregister.NS_URI)
+        username.text = creds.jid.user
+        password = reg_query.find("{%s}password" % iqregister.NS_URI)
+        password.text = creds.password
 
 
 @asyncio.coroutine
@@ -53,11 +99,13 @@ def main(app):
         mixins.insert(0, stream_mgmt.Mixin(sm_opts))
 
     try:
+        reg_cb = _register if args.register else None
         stream = yield from ClientStream.connect(Credentials(jid, password),
                                                  host=jid.host, port=args.port,
-                                                 callbacks=Callbacks(),
+                                                 state_callbacks=Callbacks(),
                                                  tls_opt=tls_opt,
                                                  mixins=mixins,
+                                                 register_cb=reg_cb,
                                                  timeout=5)
     except asyncio.TimeoutError:
         print("Connection timed out", file=sys.stderr)
@@ -124,17 +172,20 @@ arg_parser = ArgumentParser(
     description="Simple XMPP client. The user will be prompted for a login "
                 "password unless the environment variable VEX_PASSWD is set.")
 arg_parser.add_argument("jid", help="Jabber ID for login")
+arg_parser.add_argument("--register", action="store_true",
+                        help="Register for an account before logging in.")
 arg_parser.add_argument("--host", help="Alternative server for connecting")
 arg_parser.add_argument("--port", type=int, default=DEFAULT_C2S_PORT,
                         help="Alternative port for connecting")
 arg_parser.add_argument("--disconnect", action="store_true",
                         help="Disconnect once stream negotiation completes."
                        )
-arg_parser.add_argument("--tls", action="store",
-                        default="on", choices=[e.name for e in TlsOpts],
-                        help="TLS setting, 'on' by default.")
-arg_parser.add_argument("--stream-mgmt", action="store_true", default=False,
-                        help="Enable stream management (XEP 198).")
+optgroup = arg_parser.add_argument_group("Stream feature options")
+optgroup.add_argument("--tls", action="store",
+                      default="on", choices=[e.name for e in TlsOpts],
+                      help="TLS setting, 'on' by default.")
+optgroup.add_argument("--stream-mgmt", action="store_true", default=False,
+                      help="Enable stream management (XEP 198).")
 
 app = Application(main, argument_parser=arg_parser)
 sys.exit(app.run())

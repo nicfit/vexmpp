@@ -1,5 +1,6 @@
 TODO
 ----
+- make raise_on_error deafult to True
 
 - Important
    - DiscoMixin needs to be more resilnant to errors (not leak the XmppError)
@@ -31,9 +32,10 @@ Public Servers
 ---------------
 
    x jabber.org - Isode M-Link
-   - darkdna.net - Prosody
-   - jabberd.eu - jabberd2
-   - jabbim.com - ejabberd
+   x im.koderoot.net - Prosody
+   x chrome.pl - jabberd2
+   x wtfismyip.com - ejabberd
    x jabber.nicfit.net - XCP
    x tigase.im - Tigase
-   - jabber.rootbash.com - Openfire (register form gives captcha error)
+   - jabber.iitsp.com - Openfire  (web registration)
+   - lightwitch.org - Metronome   (web registration)

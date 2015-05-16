@@ -2,28 +2,22 @@
 import asyncio
 import functools
 from enum import Enum
-from operator import attrgetter
-from ipaddress import ip_address
-
-import aiodns
 
 from .jid import Jid
 from .stream import Stream, StreamCallbacks
 from .errors import Error
-from .utils import signalEvent
+from .utils import signalEvent, resolveHostPort
 from .namespaces import CLIENT_NS_URI
 from .stanzas import StreamHeader, StreamFeatures, Presence
 from .ssl_transport import create_starttls_connection
 from .features import sasl, bind, starttls, stream_mgmt
 from .protocols import (resourcebind, iqroster, presence, iqversion,
-                        entity_time, disco)
+                        entity_time, disco, iqregister)
 
 DEFAULT_C2S_PORT = 5222
 
 import logging
 log = logging.getLogger(__name__)
-
-_dns_cache = {}
 
 
 class TlsOpts(Enum):
@@ -52,47 +46,11 @@ class Credentials(object):
         self.password = password
 
 
-@asyncio.coroutine
-def _resolveHostPort(hostname, port, loop, use_cache=True):
-    global _dns_cache
-    if use_cache and hostname in _dns_cache:
-        return _dns_cache[hostname]
-
-    resolver = aiodns.DNSResolver(loop=loop)
-
-    ip = None
-    try:
-        # Given an IP, nothing more to do.
-        ip = ip_address(hostname)
-        return (str(ip), port)
-    except ValueError:
-        # Not an IP, move on..,
-        pass
-
-    try:
-        srv = yield from resolver.query("_xmpp-client._tcp.%s" % hostname,
-                                        'SRV')
-        srvrecord = sorted(srv, key=attrgetter("priority", "weight"))[0]
-        resolved_srv = yield from _resolveHostPort(srvrecord.host,
-                                                   srvrecord.port, loop)
-        _dns_cache[hostname] = resolved_srv
-        return resolved_srv
-    except aiodns.error.DNSError:
-        # No SRV, moving on...
-        pass
-
-    # Last resort
-    arecord = yield from resolver.query(hostname, 'A')
-
-    ip = arecord.pop()
-    _dns_cache[hostname] = ip, port
-    return ip, port
-
-
 class ClientStream(Stream):
-    def __init__(self, creds, tls_opt=None, mdm_opt=False, state_callbacks=None,
-                 mixins=None, default_timeout=None):
+    def __init__(self, creds, tls_opt=None, state_callbacks=None,
+                 mixins=None, default_timeout=None, register_cb=None):
         self._tls_opt = tls_opt or TlsOpts.on
+        self._register_cb = register_cb
         super().__init__(creds, state_callbacks=state_callbacks, mixins=mixins,
                          default_timeout=default_timeout)
 
@@ -132,6 +90,15 @@ class ClientStream(Stream):
             yield from starttls.handle(self, tls_elem, timeout=timeout)
             features = yield from self._reopenStream(timeout=timeout)
 
+        # In-band regisration
+        if self._register_cb:
+            reg_form = yield from iqregister.getForm(self)
+            self._register_cb(self.creds, reg_form.query)
+            reg_form.type = "set"
+            reg_form.swapToFrom()
+            reg_form.setId()
+            _ = yield from self.sendAndWait(reg_form, timeout=timeout)
+
         # SASL auth
         mechs_elem = features.getFeature("mechanisms", sasl.NS_URI)
         if mechs_elem is not None:
@@ -157,19 +124,21 @@ class ClientStream(Stream):
 
     @classmethod
     @asyncio.coroutine
-    def connect(Class, creds, host=None, port=DEFAULT_C2S_PORT, callbacks=None,
-                tls_opt=None, mdm_opt=False, mixins=None,
-                timeout=None, loop=None):
+    def connect(Class, creds, host=None, port=DEFAULT_C2S_PORT,
+                loop=None, timeout=None,
+                **stream_kwargs):
         '''Connect and negotiate a stream with the server. The connected stream
         is returned.'''
         loop = loop or asyncio.get_event_loop()
         (host,
-         port) = yield from _resolveHostPort(host if host else creds.jid.host,
-                                             port, loop)
+         port) = yield from resolveHostPort(host if host else creds.jid.host,
+                                            port, loop)
         peer = (host, int(port))
         log.verbose("Connecting %s..." % str(peer))
 
-        signalEvent(callbacks, "connecting", peer[0], peer[1])
+        state_callbacks = stream_kwargs["state_callbacks"] \
+                              if "state_callbacks" in stream_kwargs else None
+        signalEvent(state_callbacks, "connecting", peer[0], peer[1])
 
         # FIXME
         def _sslContext():
@@ -188,14 +157,11 @@ class ClientStream(Stream):
             #ssl_ctx.set_verify(VERIFY_PEER, _verifyPeerCb)
             return ssl_ctx
 
-        if mixins is None:
-            mixins = Class.createDefaultMixins()
+        if "mixins" not in stream_kwargs or stream_kwargs["mixins"] is None:
+            stream_kwargs["mixins"] = Class.createDefaultMixins()
         ProtocolFactory = functools.partial(Class, creds,
-                                            state_callbacks=callbacks,
-                                            tls_opt=tls_opt,
-                                            mdm_opt=mdm_opt,
-                                            mixins=mixins,
-                                            default_timeout=timeout)
+                                            default_timeout=timeout,
+                                            **stream_kwargs)
 
         conn = create_starttls_connection(loop, ProtocolFactory, *peer,
                                           use_starttls=True,
@@ -210,12 +176,13 @@ class ClientStream(Stream):
             peer = transport.get_extra_info("peername")
 
             yield from stream.negotiate(timeout=timeout)
-            signalEvent(callbacks, "sessionStarted", stream)
+            signalEvent(state_callbacks, "sessionStarted", stream)
         except Exception as ex:
             if not connected:
-                signalEvent(callbacks, "connectionFailed", peer[0], peer[1], ex)
+                signalEvent(state_callbacks, "connectionFailed",
+                            peer[0], peer[1], ex)
             else:
-                signalEvent(callbacks, "streamError", stream, ex)
+                signalEvent(state_callbacks, "streamError", stream, ex)
 
             raise
 
