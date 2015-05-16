@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 import sys
 import time
+import random
 import asyncio
 import logging
 import argparse
 import functools
 from enum import Enum
+from operator import attrgetter
+from ipaddress import ip_address
 from configparser import ConfigParser
+
+import aiodns
 
 from .log import LEVELS
 
@@ -323,3 +328,73 @@ def xpathFilter(xpaths):
         return wrapped_func
 
     return wrapper
+
+
+_dns_cache = {}
+@asyncio.coroutine
+def resolveHostPort(hostname, port, loop, use_cache=True, client_srv=True,
+                    srv_records=None, srv_lookup=True):
+    global _dns_cache
+    def _chooseSrv(_srvs):
+        # TODO: random choices based on prio/weight
+        return random.choice(_srvs)
+
+    if use_cache and hostname in _dns_cache:
+        cached = _dns_cache[hostname]
+        if type(cached) is list:
+            # Rechoose a SRV record
+            srv_choice = _chooseSrv(cached)
+            resolved_srv = yield from resolveHostPort(srv_choice.host,
+                                                      srv_choice.port, loop,
+                                                      use_cache=True,
+                                                      client_srv=client_srv,
+                                                      srv_lookup=False)
+            return resolved_srv
+        else:
+            return cached
+
+    resolver = aiodns.DNSResolver(loop=loop)
+
+    ip = None
+    try:
+        # Given an IP, nothing more to do.
+        ip = ip_address(hostname)
+        return (str(ip), port)
+    except ValueError:
+        # Not an IP, move on..,
+        pass
+
+    srv_query_type = "_xmpp-client" if client_srv else "_xmpp-server"
+    try:
+        srv = yield from resolver.query("{}._tcp.{}".format(srv_query_type,
+                                                            hostname),
+                                        'SRV')
+        srv_results = sorted(srv, key=attrgetter("priority", "weight"))
+
+        if srv_records is not None:
+            # Copy to callers list
+            srv_records += srv_results
+
+        _dns_cache[hostname] = srv_results
+        srv_choice = _chooseSrv(srv_results)
+
+        # Reduce to an IP
+        if srv_choice.host != hostname:
+            resolved_srv = yield from resolveHostPort(srv_choice.host,
+                                                      srv_choice.port, loop,
+                                                      use_cache=use_cache,
+                                                      client_srv=client_srv,
+                                                      srv_lookup=False)
+            _dns_cache[hostname] = resolved_srv
+            return resolved_srv
+
+    except aiodns.error.DNSError:
+        # No SRV, moving on...
+        pass
+
+    # A record
+    arecord = yield from resolver.query(hostname, 'A')
+
+    ip = arecord.pop()
+    _dns_cache[hostname] = ip, port
+    return ip, port
