@@ -4,13 +4,13 @@ import logging
 import configparser
 from pathlib import Path
 
-from vexmpp.stream import Mixin
-from vexmpp.protocols import presence
+from vexmpp.jid import Jid
 from vexmpp.application import Application
 from vexmpp.log import DEFAULT_LOGGING_CONFIG
-from vexmpp.utils import ArgumentParser, xpathFilter
+from vexmpp.utils import ArgumentParser
 from vexmpp.client import Credentials, ClientStreamCallbacks, ClientStream
 from . import plugin
+from . import reactor
 
 log = logging.getLogger(__name__)
 APP_NAME = "botch"
@@ -26,6 +26,28 @@ password = password
 %s
 """ % (CONFIG_SECT, DEFAULT_LOGGING_CONFIG)
 
+ACL_GROUPS = ("owner", "admin", "friend", "other", "blocked", "enemy")
+
+
+class BotchStream(ClientStream):
+    _acl = {}
+
+    def acl(self, jid):
+        if not isinstance(jid, Jid):
+            raise ValueError("Jid type required")
+
+        group = None
+        for g in self._acl:
+            if jid.bare_jid in self._acl[g]:
+                group = g
+                break
+
+        return group or "other"
+
+    def aclCheck(self, jid, acl):
+        jid_acl = self.acl(jid)
+        return ACL_GROUPS.index(jid_acl) <= ACL_GROUPS.index(acl)
+
 
 class Botch(Application):
     def __init__(self):
@@ -39,13 +61,23 @@ class Botch(Application):
 
     @asyncio.coroutine
     def _initBot(self):
-        bot = yield from ClientStream.connect(
+        bot = yield from BotchStream.connect(
                 Credentials(self.config.get(CONFIG_SECT, "jid"),
                             self.config.get(CONFIG_SECT, "password")),
                 state_callbacks=Callbacks(self),
                 timeout=30)
 
         self.log.info("Connected {}".format(bot.jid.full))
+        bot.app = self
+
+        for g in ACL_GROUPS:
+            if g == "other":
+                continue
+
+            jids = [Jid(j) for j in self.config.get(CONFIG_SECT, g,
+                                                    fallback="")
+                                                .split("\n") if j]
+            bot._acl[g] = jids
 
         bot.sendPresence()
         self.log.info("Alive!")
@@ -98,8 +130,7 @@ class Botch(Application):
             #import ipdb; ipdb.set_trace()
 
             tasks = []
-            task_args = (self.config, self.bot)
-            tasks.append(asyncio.async(self._reactorTask()))
+            tasks.append(reactor.Task(self.config, self.bot, self.plugins))
 
             for plugin in self.plugins.values():
                 tasks.append(asyncio.async(plugin.activate(self.bot)))
@@ -107,6 +138,8 @@ class Botch(Application):
             for done_task in asyncio.as_completed(tasks):
                 try:
                     result = yield from done_task
+                except asyncio.CancelledError:
+                    return self._exit_status
                 except Exception as ex:
                     self.log.exception(ex)
                     # Continue...
@@ -118,40 +151,12 @@ class Botch(Application):
 
         return 0
 
-    @asyncio.coroutine
-    def _reactorTask(self):
-        while True:
-            try:
-                self.log.debug("_reactorTask waiting for stanza")
-                stanza = yield from self.bot.wait(("/message", None),
-                                                  timeout=10)
-                self.log.info("Message [from: {}]: {}"
-                              .format(stanza.frm, stanza.body))
-            except asyncio.TimeoutError:
-                pass
-
 
 class Callbacks(ClientStreamCallbacks):
     def __init__(self, app):
         self.app = app
     def disconnected(self, stream, reason):
         # TODO Reconnect
-        self.app.event_loop.stop()
+        self.app.stop()
 
 
-# FIXME: unused
-class SubscriptionMixin(Mixin):
-    '''Honors subscription requests from root_jid, denies all others.'''
-    def __init__(self, root_jid):
-        super().__init__()
-        self.root_jid = root_jid
-        self.yes = presence.SubscriptionAckMixin()
-        self.no = presence.DenySubscriptionAckMixin()
-
-    @xpathFilter(presence.S10N_XPATHS)
-    @asyncio.coroutine
-    def onStanza(self, stream, stanza):
-        if stanza.frm.bare_jid == self.root_jid.bare:
-            yield from self.yes.onStanza(stream, stanza)
-        else:
-            yield from self.no.onStanza(stream, stanza)
