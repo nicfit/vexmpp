@@ -51,7 +51,6 @@ class Task(asyncio.Task):
                ):
                 return
 
-        import ipdb; ipdb.set_trace()
         resp = None
         msg_parts = shlex.split(msg.body.strip())
         if msg_parts[0] in self.commands:
@@ -72,6 +71,7 @@ class Task(asyncio.Task):
             msg.body = resp
             msg.swapToFrom()
             self.bot.send(msg)
+
 
 class HelpPlugin(Plugin):
     CMD = ".help"
