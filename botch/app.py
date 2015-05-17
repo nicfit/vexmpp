@@ -30,15 +30,15 @@ ACL_GROUPS = ("owner", "admin", "friend", "other", "blocked", "enemy")
 
 
 class BotchStream(ClientStream):
-    _acl = {}
+    _acls = {}
 
     def acl(self, jid):
         if not isinstance(jid, Jid):
             raise ValueError("Jid type required")
 
         group = None
-        for g in self._acl:
-            if jid.bare_jid in self._acl[g]:
+        for g in self._acls:
+            if jid.bare_jid in self._acls[g]:
                 group = g
                 break
 
@@ -47,6 +47,9 @@ class BotchStream(ClientStream):
     def aclCheck(self, jid, acl):
         jid_acl = self.acl(jid)
         return ACL_GROUPS.index(jid_acl) <= ACL_GROUPS.index(acl)
+
+    def aclJids(self, acl):
+        return [j for j in self._acls[acl]]
 
 
 class Botch(Application):
@@ -77,7 +80,7 @@ class Botch(Application):
             jids = [Jid(j) for j in self.config.get(CONFIG_SECT, g,
                                                     fallback="")
                                                 .split("\n") if j]
-            bot._acl[g] = jids
+            bot._acls[g] = jids
 
         bot.sendPresence()
         self.log.info("Alive!")
@@ -126,8 +129,6 @@ class Botch(Application):
         try:
             self.plugins = self._initPlugins()
             self.bot = yield from self._initBot()
-
-            #import ipdb; ipdb.set_trace()
 
             tasks = []
             tasks.append(reactor.Task(self.config, self.bot, self.plugins))
