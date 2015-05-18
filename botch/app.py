@@ -64,9 +64,11 @@ class Botch(Application):
 
     @asyncio.coroutine
     def _initBot(self):
+        main_config = self.config[CONFIG_SECT]
+
         bot = yield from BotchStream.connect(
-                Credentials(self.config.get(CONFIG_SECT, "jid"),
-                            self.config.get(CONFIG_SECT, "password")),
+                Credentials(main_config.get("jid"),
+                            main_config.get("password")),
                 state_callbacks=Callbacks(self),
                 timeout=30)
 
@@ -77,12 +79,14 @@ class Botch(Application):
             if g == "other":
                 continue
 
-            jids = [Jid(j) for j in self.config.get(CONFIG_SECT, g,
-                                                    fallback="")
-                                                .split("\n") if j]
+            jids = [Jid(j) for j in main_config.get(g, fallback="")
+                                               .split("\n") if j]
             bot._acls[g] = jids
 
-        bot.sendPresence()
+        bot.sendPresence(
+            status=main_config.get("presence_status"),
+            show=main_config.get("presence_show"),
+            priority=main_config.getint("presence_priorty", fallback=10))
         self.log.info("Alive!")
 
         return bot
