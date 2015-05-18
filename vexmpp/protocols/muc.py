@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import asyncio
 from lxml import etree
+
+from .. import stream
+from ..utils import xpathFilter
 from ..jid import Jid as BaseJid
 from ..stanzas import Presence, Iq
 
@@ -98,3 +101,129 @@ def enterRoom(stream, room, service, nick, password=None,
                                           timeout=timeout)
 
     return pres
+
+
+class RosterItem:
+    '''A specialiaztion of RosterItem that adds affiliation and role members.'''
+
+    def __init__(self, nickname, item_elem=None):
+        self.nickname = nickname
+        self.affiliation = None
+        self.role = None
+        self.jid = None
+
+        if item_elem:
+            import ipdb; ipdb.set_trace()
+            a = item_elem['affiliation']
+            self.affiliation = a if a != 'none' else None
+            r = item_elem['role']
+            self.role = r if r != 'none' else None
+            j = item_elem['jid']
+            self.jid = ImmutableJID(j) if j else None
+
+    def __str__(self):
+        return ("RosterItem [nickname: {nickname}, jid: {jid}, "
+                "affiliation: {affiliation}, role: {role}]"
+                .format(nickname=self.nickname,
+                        jid=self.jid.full if self.jid else None,
+                        affiliation=self.affiliation, role=self.role))
+
+
+class RoomInfo:
+    '''A container for MUC room information including occupant roster.'''
+
+    def __init__(self, room_jid, nick):
+        self.jid = Jid(room_jid.full())
+        self.nickname = nick
+        self.roster = []
+
+    def addToRoster(self, roster_item):
+        '''Add/update an occupant roster entry corresponding to roster_item.'''
+        self.removeFromRoster(roster_item.nickname)
+        self.roster.append(roster_item)
+
+    def removeFromRoster(self, nickname):
+        '''Remove an occupant roster entry corresponding to nickname.'''
+        for item in self.roster:
+            if item.nickname == nickname:
+                self.roster.remove(item)
+                return item
+        return None
+
+
+##
+# \brief This class provides MUC room and presence tracking for a stream.
+#
+# This Mixin exports the data 'muc_rooms' which is a dictionary of the form:
+# \c {room_jid: MucRoomInfo}
+#
+# \note Due to XCP not supporting status=110 to distinguish the stream's
+#       muc presence from other occupant presence the use of
+#       jload.xmpp.protocols.muc.enterRoom is required to prepare the state
+#       of this Mixin.
+class MucMixin(stream.Mixin):
+    PRESENCE_IN_XPATH = ("/presence/muc_user:x", {"muc_user": NS_URI_USER})
+    PRESENCE_OUT_XPATH = ("/presence/muc:x", {"muc": NS_URI})
+    #INVITE_XPATH = ("/message/muc_user:x/invite", {"muc_user": NS_URI_USER})
+
+    def __init__(self):
+        self._muc_rooms = {}
+        self._muc_rooms_exiting = {}
+
+        super().__init__([('muc_rooms', self._muc_rooms),
+                          ('muc_rooms_exiting', self._muc_rooms_exiting)])
+
+    @xpathFilter([PRESENCE_IN_XPATH,
+                  PRESENCE_OUT_XPATH])
+    @asyncio.coroutine
+    def onStanza(self, stream, stanza):
+        print("MucMixin: {}".format(stanza.toXml().decode()))
+
+        '''
+        if MucMixin.PRESENCE_IN_XPATH.matches(stanza):
+            log.debug("MucMixin presence stanza received: %s" % stanza.toXml())
+            nick_jid = stanza.getFrom(as_jid=True)
+            room_jid = nick_jid.userhostJID()
+
+            # The muc_rooms dictionary is populated in enterRoom.
+            # The muc_rooms_exiting dictionary is populated in exitRoom
+            if self._muc_rooms.has_key(room_jid):
+                room_info = self._muc_rooms[room_jid]
+            elif self._muc_rooms_exiting.has_key(room_jid):
+                room_info = self._muc_rooms_exiting[room_jid]
+            else:
+                # We can get unavailable presence when the room is destoyed
+                # even after we left it.
+                return
+
+            if room_info.nickname == nick_jid.nick or SELFPRESENCE_XQUERY.matches(stanza):
+                # This is presence for "me"
+                if stanza.getType() != Presence.TYPE_AVAILABLE:
+                    # Check for status 303 - nick change.
+                    x = stanza.getElement("x", NS_URI_USER)
+                    status = x.getElement("status")
+                    if (not status or
+                            status['code'] != str(STATUS_NICK_CHANGE)):
+                        if self._muc_rooms.has_key(room_jid):
+                            del self._muc_rooms[room_jid]
+                        if self._muc_rooms_exiting.has_key(room_jid):
+                            del self._muc_rooms_exiting[room_jid]
+                else:
+                    x = stanza.getElement("x", NS_URI_USER)
+                    roster_item = MucRosterItem(nick_jid.nick, item_elem=x.item)
+                    room_info.addToRoster(roster_item)
+            else:
+                # This is presence for another occupant
+                if stanza.getType() != Presence.TYPE_AVAILABLE:
+                    room_info.removeFromRoster(nick_jid.nick)
+                else:
+                    x = stanza.getElement("x", NS_URI_USER)
+                    roster_item = MucRosterItem(nick_jid.nick, item_elem=x.item)
+                    # This will update instead of add if that required
+                    room_info.addToRoster(roster_item)
+        elif MucMixin.INVITE_XPATH.matches(stanza):
+            log.debug("MucMixin invite message received: %s" %
+                       stanza.toXml())
+            self._handleInvite(stream, stanza)
+
+        '''
