@@ -12,7 +12,7 @@ from .stanzas import StreamHeader, StreamFeatures, Presence
 from .ssl_transport import create_starttls_connection
 from .features import sasl, bind, starttls, stream_mgmt
 from .protocols import (resourcebind, iqroster, presence, iqversion,
-                        entity_time, disco, iqregister)
+                        entity_time, disco, iqregister, muc)
 
 DEFAULT_C2S_PORT = 5222
 
@@ -200,6 +200,7 @@ class ClientStream(Stream):
                 presence.PresenceCacheMixin(),
                 presence.SubscriptionAckMixin(),
                 disco.DiscoCacheMixin(),
+                muc.MucMixin(),
                ]
 
     def sendPresence(self, **kwargs):

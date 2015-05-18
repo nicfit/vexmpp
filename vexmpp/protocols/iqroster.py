@@ -161,7 +161,6 @@ class Roster(object):
 
 
 class RosterMixin(Mixin):
-
     def __init__(self):
         self.roster = Roster()
         super().__init__([('roster', self.roster)])
