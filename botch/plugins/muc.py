@@ -6,8 +6,10 @@ from vexmpp.protocols import muc
 
 from botch.app import APP_NAME
 from botch.plugin import Plugin
+from botch.plugin import command, ArgsParser, ArgsParserExitInfo
 
 log = logging.getLogger("botch.plugins.muc")
+
 
 class MucPlugin(Plugin):
     CONFIG_SECT = "muc"
@@ -23,3 +25,10 @@ class MucPlugin(Plugin):
             log.info("Joining MUC room {}...".format(jid.full))
             yield from muc.enterRoom(bot, jid.room, jid.host, jid.nick,
                                      timeout=bot.default_timeout)
+
+
+@command(acl="owner")
+def _mucCmd(env):
+    bot = env.bot
+    import ipdb; ipdb.set_trace()
+    pass
