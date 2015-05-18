@@ -236,6 +236,7 @@ class Stream(asyncio.Protocol):
 
         for m in self._mixins:
             try:
+                # FIXME: use async and let these run separate
                 yield from m.onStanza(self, stanza)
             except:
                 log.exception("{} mixin error".format(m.__class__.__name__))
