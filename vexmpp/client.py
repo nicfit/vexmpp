@@ -202,8 +202,8 @@ class ClientStream(Stream):
                 disco.DiscoCacheMixin(),
                ]
 
-    def sendPresence(self):
-        self.send(Presence())
+    def sendPresence(self, **kwargs):
+        self.send(Presence(**kwargs))
 
 
 class ClientStreamCallbacks(StreamCallbacks):
