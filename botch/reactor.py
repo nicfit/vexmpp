@@ -4,7 +4,7 @@ import asyncio
 import logging
 
 from vexmpp.protocols import muc
-from .plugin import Plugin
+from .plugin import Plugin, command, all_commands, CommandEnv
 
 log = logging.getLogger(__name__)
 
@@ -14,9 +14,8 @@ class Task(asyncio.Task):
         self.bot = bot
         self.config = config
 
-        self.plugins = {HelpPlugin: HelpPlugin(config, plugins)}
+        self.plugins = {}
         self.plugins.update(plugins)
-        self.commands = _extractCommands(self.plugins.values())
 
         super().__init__(self._run(), loop=loop)
 
@@ -33,6 +32,8 @@ class Task(asyncio.Task):
                 self._handleMessage(stanza)
 
     def _handleMessage(self, msg):
+        global all_commands
+
         acl = self.bot.acl(msg.frm)
         log.info("Message [from: {} ({})]: {}" .format(msg.frm, acl, msg.body))
 
@@ -53,51 +54,40 @@ class Task(asyncio.Task):
 
         resp = None
         msg_parts = shlex.split(msg.body.strip())
-        if msg_parts[0] in self.commands:
+        if msg_parts[0] in all_commands:
             # Command msg
+            cmd = all_commands[msg_parts[0]]
             try:
-                resp = self.commands[msg_parts[0]].callback(msg_parts[0],
-                                                            msg.frm,
-                                                            msg_parts[1:],
-                                                            self.bot)
+                env = CommandEnv(cmd=msg_parts[0], args=msg_parts[1:],
+                                 from_jid=msg.frm, bot=self.bot,
+                                 arg_parser=cmd.arg_parser)
+                resp = all_commands[msg_parts[0]].callback(env)
             except Exception:
                 log.exception("Command error")
                 return
         else:
             # Other msg
-            resp = "Hi. Say {} for help".format(HelpPlugin.CMD)
+            if self.bot.aclCheck(msg.frm, "friend"):
+                resp = "{} for help".format("/".join(HELP_CMDS))
 
         if resp:
-            msg.body = resp
+            msg.body = str(resp)
             msg.swapToFrom()
             self.bot.send(msg)
 
 
-class HelpPlugin(Plugin):
-    CMD = ".help"
+HELP_CMDS = ("-h", "--help")
 
-    def __init__(self, config, plugins):
-        super().__init__(config)
+@command(cmd=HELP_CMDS)
+def _helpCmd(env):
+    global all_commands
 
-        self.addCommand(self.CMD, self._helpCmd)
-        self._all_commands = _extractCommands(plugins.values())
+    cmds = [c for c in all_commands.values()
+              if env.bot.aclCheck(env.from_jid, c.acl)]
 
-    def _helpCmd(self, _, from_jid, args, bot):
-        cmds = [c for c in self._all_commands.values()
-                  if bot.aclCheck(from_jid, c.acl)]
-
-        cmd_names = sorted([c.cmd for c in cmds])
-
-        if not cmd_names:
-            msg = "No commands"
-        else:
-            msg = ", ".join(cmd_names)
-        return msg
-
-
-def _extractCommands(plugins):
-    commands = {}
-    for p in plugins:
-        # FIXME: detect name collisions
-        commands.update(p.commands())
-    return commands
+    cmd_names = sorted([c.cmd for c in cmds])
+    if not cmd_names:
+        msg = "Nothing to see here."
+    else:
+        msg = "Commands: " + ", ".join(cmd_names)
+    return msg
