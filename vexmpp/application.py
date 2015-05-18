@@ -85,5 +85,4 @@ class Application(object):
 
         self._exit_status = exit_status
         self._main_task.cancel()
-        self.event_loop.stop()
         logging.shutdown()
