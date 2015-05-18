@@ -112,6 +112,7 @@ class PresenceCacheMixin(Mixin, PresenceDict):
         PresenceDict.__init__(self)
         Mixin.__init__(self, [('presence_cache', self)])
         self._presence_update_event = DataEvent()
+        self._self_presence = None
 
     @asyncio.coroutine
     def waitForUpdate(self, timeout=None):
@@ -157,7 +158,14 @@ class PresenceCacheMixin(Mixin, PresenceDict):
             self._presence_update_event.set(presence)
             self._presence_update_event.clear()
 
+        if from_jid == stream.jid:
+            self._self_presence = presence
+
         return presence
+
+    @property
+    def self(self):
+        return self._self_presence
 
 
 # FIXME: move me
