@@ -4,10 +4,28 @@ TODO
 - tests resolveHostPort caching
 
 Botch:
-    - Log level commandm Comand API
+    - Log level command Comand API
+    ~ xmpp commands
+      x new xmpp.py module
+      x presence
+      - msg
+    ~ admins commands
+      x subcommands for each of the existing
+      - config save
+      - acl add
+      - acl remove
+    - muc commands
+      - say
+      - join [room] (follow by default)
+    - triggers for reacting to seen text
+    - Muc link trigger
+      - Stores in DB
+      - Kicks reposts
+    - Config-less startup
+      - ~/.botch/config.ini (default)
 
 - Important
-   - DiscoMixin needs to be more resilnant to errors (not leak the XmppError)
+   x DiscoMixin needs to be more resilnant to errors (not leak the XmppError)
      See tigace.im login
    - Ability to do TLS with immediate handshake (443, 5223, etc.)
    - Remove callback methods that are not async (connectionFailed is the
