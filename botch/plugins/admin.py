@@ -38,3 +38,20 @@ def _adminCommands(env):
         return "\n{}".format(pformat(env.bot._acls))
     elif subcmd == "acl":
         env.bot.app.stop(50)
+
+
+arg_parser = ArgsParser(description="Debug interface", prog="debug")
+arg_parser.add_argument("what",
+                        choices=["presence_cache", "roster", "muc_rooms"])
+@command(acl="owner", arg_parser=arg_parser)
+def debug(env):
+    args = env.args
+    bot = env.bot
+
+    thing = getattr(bot, args.what)
+    if thing is not None:
+        msg = "{}:\n{}\n".format(args.what, pformat(thing))
+    else:
+        msg = "huh?"
+
+    return msg

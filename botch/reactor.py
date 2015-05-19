@@ -41,7 +41,7 @@ class Task(asyncio.Task):
             return
 
         if msg.type == "groupchat" or msg.x(muc. NS_URI_USER) is not None:
-            muc_jid = muc.Jid(msg.frm)
+            muc_jid = muc.MucJid(msg.frm)
 
             if (# Msg from the room...
                 muc_jid.nick is None or # Msg from the room...
@@ -50,6 +50,7 @@ class Task(asyncio.Task):
                 msg.find("{urn:xmpp:delay}delay") is not None or
                 msg.x(muc.JINC_NS_URI_HISTORY) is not None
                ):
+                # Ignored muc types
                 return
 
         resp = None
@@ -61,6 +62,7 @@ class Task(asyncio.Task):
                 env = CommandEnv(cmd=msg_parts[0], args=msg_parts[1:],
                                  from_jid=msg.frm, bot=self.bot,
                                  arg_parser=cmd.arg_parser)
+                # XXX: Coroutine that is spawed and not waited for.
                 resp = all_commands[msg_parts[0]].callback(env)
             except Exception:
                 log.exception("Command error")

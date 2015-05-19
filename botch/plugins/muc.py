@@ -3,6 +3,7 @@ import asyncio
 import logging
 
 from vexmpp.protocols import muc
+from vexmpp.protocols.muc import MucJid
 
 from botch.app import APP_NAME
 from botch.plugin import Plugin
@@ -16,11 +17,11 @@ class MucPlugin(Plugin):
 
     @asyncio.coroutine
     def activate(self, bot):
-        for jid in [muc.Jid(j.strip())
+        for jid in [MucJid(j.strip())
                       for j in self.config["muc"].get("rooms").split("\n")]:
             # Join rooms
             if not jid.nick:
-                jid = muc.Jid("{}/{}".format(jid.bare,  APP_NAME))
+                jid = MucJid("{}/{}".format(jid.bare,  APP_NAME))
 
             log.info("Joining MUC room {}...".format(jid.full))
             yield from muc.enterRoom(bot, jid.room, jid.host, jid.nick,
