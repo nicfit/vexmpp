@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from os.path import expandvars, expanduser
 import sys
 import types
 import asyncio
@@ -13,19 +14,10 @@ log = logging.getLogger(__name__)
 
 Command = namedtuple("Command", "cmd, callback, acl, arg_parser")
 CommandEnv = namedtuple("CommandEnv", "cmd, args, from_jid, bot, arg_parser")
+Trigger = namedtuple("Trigger", "callback, regex, search")
 
 all_commands = {}
-
-
-class Plugin:
-    CONFIG_SECT = None
-
-    def __init__(self, config):
-        self.config = config
-
-    @asyncio.coroutine
-    def activate(self, stream):
-        pass
+all_triggers = {}
 
 
 class command:
@@ -82,33 +74,46 @@ class command:
         return cmdFunc
 
 
-def _loadMod(pymod):
-    plugin_classes = []
+class trigger:
+    '''TODO'''
 
-    try:
-        sys.path.append(str(pymod.parent))
-        mod = __import__(pymod.stem, globals=globals(), locals=locals())
-    except Exception:
-        log.exception("Plugin import error")
-        return []
-    finally:
-        sys.path.remove(str(pymod.parent))
+    def __init__(self, regex, search=False):
+        self.regex = regex
+        self.search = search
 
-    for sym in dir(mod):
-        attr = getattr(mod, sym)
-        if ((type(attr) is type) and (attr is not Plugin) and
-                issubclass(attr, Plugin)):
-            log.info("Loaded plugin '{}' ({})".format(sym, str(pymod)))
-            plugin_classes.append(attr)
+    def  __call__(self, func):
+        global all_triggers
 
-    return plugin_classes
+        @wraps(func)
+        def trfunc(*a, **kw):
+            return func(*a, **kw)
+
+        name = func.__qualname__
+        if name in all_triggers:
+            log.warn("'{}' clashes with an existing trigger, ignoring"
+                     .format(name))
+        all_triggers[name] = Trigger(trfunc, self.regex, self.search)
+
+        return trfunc
+
+
+class Plugin:
+    CONFIG_SECT = None
+
+    def __init__(self, config):
+        self.config = config
+
+    @asyncio.coroutine
+    def activate(self, stream):
+        pass
 
 
 def loader(path, *paths):
     all_paths = [path] + list(paths)
     all_plugins = []
 
-    for path in (Path(p) for p in all_paths):
+    for path in (Path(expandvars(expanduser(str(p)))) for p in all_paths):
+
         if path.is_dir():
             for pyfile in path.glob("*.py"):
                 if pyfile.name.startswith("_") == False:
@@ -143,3 +148,25 @@ class ArgsParser(ArgumentParser):
     def _print_message(self, message, file=None):
         if message:
             self._msg_buffer.append(message)
+
+
+def _loadMod(pymod):
+    plugin_classes = []
+
+    try:
+        sys.path.append(str(pymod.parent))
+        mod = __import__(pymod.stem, globals=globals(), locals=locals())
+    except Exception:
+        log.exception("Plugin import error")
+        return []
+    finally:
+        sys.path.remove(str(pymod.parent))
+
+    for sym in dir(mod):
+        attr = getattr(mod, sym)
+        if ((type(attr) is type) and (attr is not Plugin) and
+                issubclass(attr, Plugin)):
+            log.info("Loaded plugin '{}' ({})".format(sym, str(pymod)))
+            plugin_classes.append(attr)
+
+    return plugin_classes

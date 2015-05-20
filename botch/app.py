@@ -14,6 +14,7 @@ from . import reactor
 
 log = logging.getLogger(__name__)
 APP_NAME = "botch"
+DEFAULT_CONFIG = "~/.botch/config.ini"
 CONFIG_SECT = APP_NAME
 # FIXME
 EXAMPLE_CONFIG = """
@@ -59,6 +60,7 @@ class Botch(Application):
                 description="Personal XMPP bot.",
                 config_opts=ArgumentParser.ConfigOpt.argument,
                 config_required=True,
+                default_config_file=DEFAULT_CONFIG,
                 sample_config=EXAMPLE_CONFIG)
         super().__init__(app_name=APP_NAME, argument_parser=argp)
 
@@ -120,15 +122,6 @@ class Botch(Application):
     def _main(self):
         self.log.info("Botch bot starting...")
         self.config = self.args.config_obj
-
-        '''
-        import signal
-        def _interrupted(signum):
-            log.info("Interrupted {}".format(signum))
-            self.stop()
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            self.event_loop.add_signal_handler(sig, _interrupted, sig)
-        '''
 
         try:
             self.plugins = self._initPlugins()
