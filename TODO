@@ -4,6 +4,7 @@ TODO
 - tests resolveHostPort caching
 
 Botch:
+    - links trigger, command
     - Log level command Comand API
     ~ xmpp commands
       x new xmpp.py module
@@ -23,6 +24,13 @@ Botch:
       - Kicks reposts
     - Config-less startup
       - ~/.botch/config.ini (default)
+    - Help subcommands
+      - commands
+      - commands --full ?
+    - Files command
+      - list
+      - Downloand.. fisrt file is botch.tgz
+      - upload
 
 - Important
    x DiscoMixin needs to be more resilnant to errors (not leak the XmppError)

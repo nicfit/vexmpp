@@ -4,7 +4,7 @@ import asyncio
 import logging
 
 from vexmpp.protocols import muc
-from .plugin import Plugin, command, all_commands, CommandEnv
+from .plugin import Plugin, command, all_commands, all_triggers, CommandEnv
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +29,47 @@ class Task(asyncio.Task):
                 continue
 
             if stanza.name == "message":
-                self._handleMessage(stanza)
+                if stanza.type == "groupchat":
+                    self._handleGroupchatMessage(stanza)
+                else:
+                    self._handleMessage(stanza)
+
+    def _handleGroupchatMessage(self, msg):
+        assert(msg.type == "groupchat")
+        muc_jid = muc.MucJid(msg.frm)
+        self_jid = self.bot.muc_rooms[muc_jid.room_jid].self_jid
+
+        # Stuff to ignore
+        if (# Msg from the room...
+            muc_jid.nick is None or
+            # History msgs
+            msg.x("jabber:x:delay") is not None or
+            msg.find("{urn:xmpp:delay}delay") is not None or
+            msg.x(muc.JINC_NS_URI_HISTORY) is not None
+           ):
+            return
+
+        # "Triggers"
+        if muc_jid != self_jid:
+            msg.to, msg.frm = muc_jid.room_jid, None
+            for name in all_triggers:
+                trigger = all_triggers[name]
+                resp = None
+
+                if not trigger.search:
+                    match = trigger.regex.match(msg.body)
+                else:
+                    match = trigger.regex.findall(msg.body)
+
+                if match:
+                    try:
+                        resp = trigger.callback(match)
+                    except Exception:
+                        log.exception("Trigger error")
+                    else:
+                        if resp:
+                            msg.body = str(resp)
+                            self.bot.send(msg)
 
     def _handleMessage(self, msg):
         global all_commands
@@ -40,19 +80,7 @@ class Task(asyncio.Task):
         if not self.bot.aclCheck(msg.frm, "other"):
             return
 
-        if msg.type == "groupchat" or msg.x(muc. NS_URI_USER) is not None:
-            muc_jid = muc.MucJid(msg.frm)
-
-            if (# Msg from the room...
-                muc_jid.nick is None or # Msg from the room...
-                # History msgs
-                msg.x("jabber:x:delay") is not None or
-                msg.find("{urn:xmpp:delay}delay") is not None or
-                msg.x(muc.JINC_NS_URI_HISTORY) is not None
-               ):
-                # Ignored muc types
-                return
-
+        # "Commands"
         resp = None
         msg_parts = shlex.split(msg.body.strip())
         if msg_parts[0] in all_commands:
@@ -70,7 +98,7 @@ class Task(asyncio.Task):
         else:
             # Other msg
             if self.bot.aclCheck(msg.frm, "friend"):
-                resp = "{} for help".format("/".join(HELP_CMDS))
+                resp = "``{}``'?".format(HELP_CMD)
 
         if resp:
             msg.body = str(resp)
@@ -78,9 +106,9 @@ class Task(asyncio.Task):
             self.bot.send(msg)
 
 
-HELP_CMDS = ("-h", "--help")
+HELP_CMD = "help"
 
-@command(cmd=HELP_CMDS)
+@command(cmd=HELP_CMD)
 def _helpCmd(env):
     global all_commands
 

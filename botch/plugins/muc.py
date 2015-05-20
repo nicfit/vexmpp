@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import random
 import asyncio
 import logging
 
@@ -24,12 +25,9 @@ class MucPlugin(Plugin):
                 jid = MucJid("{}/{}".format(jid.bare,  APP_NAME))
 
             log.info("Joining MUC room {}...".format(jid.full))
-            yield from muc.enterRoom(bot, jid.room, jid.host, jid.nick,
-                                     timeout=bot.default_timeout)
-
-
-@command(acl="owner")
-def _mucCmd(env):
-    bot = env.bot
-    import ipdb; ipdb.set_trace()
-    pass
+            try:
+                yield from muc.enterRoom(bot, jid.room, jid.host, jid.nick,
+                                         timeout=bot.default_timeout)
+            except:
+                log.exception("Error joining MUC room {}".format(jid.full))
+                continue
