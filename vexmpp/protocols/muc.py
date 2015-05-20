@@ -111,9 +111,11 @@ class RosterItem:
     affiliation = None
     role = None
     jid = None
+    self_presence = False
 
-    def __init__(self, nickname, item_elem=None):
+    def __init__(self, nickname, item_elem=None, self_presence=False):
         self.nickname = nickname
+        self.self_presence = self_presence
 
         def _itemGet(item, attr):
             val = item.get(attr)
@@ -139,9 +141,8 @@ class RosterItem:
 class RoomInfo:
     '''A container for MUC room information including occupant roster.'''
 
-    def __init__(self, room_jid, nick):
-        self.jid = room_jid.room_jid
-        self.nickname = nick
+    def __init__(self, room_jid):
+        self.jid = room_jid.room_jid  # Making sure to drop any resource/nick
         self.roster = []
 
     def addToRoster(self, roster_item):
@@ -156,6 +157,13 @@ class RoomInfo:
                 self.roster.remove(item)
                 return item
         return None
+
+    @property
+    def self_jid(self):
+        for r in self.roster:
+            if r.self_presence:
+                return r.self_presence
+        raise AssertionError("No self presence JID")
 
 
 class MucMixin(stream.Mixin):
@@ -185,21 +193,15 @@ class MucMixin(stream.Mixin):
         if room_jid in self._muc_rooms:
             room_info = self._muc_rooms[room_jid]
         else:
-            room_info = RoomInfo(room_jid, muc_jid.nick)
+            room_info = RoomInfo(muc_jid)
             self._muc_rooms[room_jid] = room_info
 
-        if self_presence and pres.type == pres.TYPE_AVAILABLE:
-            roster_item = RosterItem(muc_jid.nick, item_elem=item)
+        if pres.type == pres.TYPE_AVAILABLE:
+            roster_item = RosterItem(muc_jid.nick, item_elem=item,
+                                     self_presence=self_presence)
             room_info.addToRoster(roster_item)
-        elif self_presence:
-            if status is None or status.get("code") != "303":
-                # Nickname change.
-                if room_jid in self._muc_rooms:
-                    del self._muc_rooms[room_jid]
         else:
-            # Not self presence
-            if pres.type != pres.TYPE_AVAILABLE:
-                room_info.removeFromRoster(muc_jid.nick)
-            else:
-                roster_item = RosterItem(muc_jid.nick, item_elem=item)
-                room_info.addToRoster(roster_item)
+            room_info.removeFromRoster(muc_jid.nick)
+            if self_presence:
+                del self._muc_rooms[room_jid]
+
