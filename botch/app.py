@@ -47,7 +47,29 @@ class BotchStream(ClientStream):
 
     def aclCheck(self, jid, acl):
         jid_acl = self.acl(jid)
-        return ACL_GROUPS.index(jid_acl) <= ACL_GROUPS.index(acl)
+        real_jid = jid
+
+        if jid_acl == "other":
+            # Check real jids amongst MUC Jids
+            room_jid = jid.bare_jid
+            nick = jid.resource
+
+            if room_jid in self.muc_rooms:
+                for item in self.muc_rooms[room_jid].roster:
+                    if item.nickname == nick and item.jid:
+                        jid_acl = self.acl(item.jid)
+                        real_jid = item.jid
+                        break
+
+        authz = bool(ACL_GROUPS.index(jid_acl) <= ACL_GROUPS.index(acl))
+        jid = jid.full
+        real_jid = real_jid.full
+        log.info("{acl} ACL check for {jid}{aka} ({jid_acl}): {valid}"
+                 .format(valid=authz,
+                         aka=" (aka {})".format(real_jid) if real_jid != jid
+                                                          else "",
+                         **locals()))
+        return authz
 
     def aclJids(self, acl):
         return [j for j in self._acls[acl]]

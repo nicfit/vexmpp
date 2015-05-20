@@ -4,7 +4,8 @@ import asyncio
 import logging
 
 from vexmpp.protocols import muc
-from .plugin import Plugin, command, all_commands, all_triggers, CommandEnv
+from .plugin import (Plugin, command, all_commands, all_triggers,
+                     CommandEnv, TriggerEnv)
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +52,9 @@ class Task(asyncio.Task):
 
         # "Triggers"
         if muc_jid != self_jid:
+            # Swap addresses
             msg.to, msg.frm = muc_jid.room_jid, None
+
             for name in all_triggers:
                 trigger = all_triggers[name]
                 resp = None
@@ -63,7 +66,9 @@ class Task(asyncio.Task):
 
                 if match:
                     try:
-                        resp = trigger.callback(match)
+                        env = TriggerEnv(match=match, from_jid=muc_jid,
+                                         stanza=msg)
+                        resp = trigger.callback(env)
                     except Exception:
                         log.exception("Trigger error")
                     else:
@@ -89,7 +94,8 @@ class Task(asyncio.Task):
             try:
                 env = CommandEnv(cmd=msg_parts[0], args=msg_parts[1:],
                                  from_jid=msg.frm, bot=self.bot,
-                                 arg_parser=cmd.arg_parser)
+                                 arg_parser=cmd.arg_parser,
+                                 stanza=msg, acl=cmd.acl)
                 # XXX: Coroutine that is spawed and not waited for.
                 resp = all_commands[msg_parts[0]].callback(env)
             except Exception:

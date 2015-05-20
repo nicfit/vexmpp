@@ -13,8 +13,10 @@ log = logging.getLogger(__name__)
 
 
 Command = namedtuple("Command", "cmd, callback, acl, arg_parser")
-CommandEnv = namedtuple("CommandEnv", "cmd, args, from_jid, bot, arg_parser")
+CommandEnv = namedtuple("CommandEnv",
+                        "cmd, args, from_jid, bot, arg_parser, stanza, acl")
 Trigger = namedtuple("Trigger", "callback, regex, search")
+TriggerEnv = namedtuple("TriggerEnv", "match, from_jid, stanza")
 
 all_commands = {}
 all_triggers = {}
@@ -45,6 +47,10 @@ class command:
 
         @wraps(func)
         def cmdFunc(cmd_env):
+            if not cmd_env.bot.aclCheck(cmd_env.from_jid, cmd_env.acl):
+                # Failed acl check, 403 response
+                return "403"
+
             parsed_args = None
 
             if cmd_env.arg_parser:
