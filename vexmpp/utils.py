@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import sys
 import time
 import random
@@ -59,9 +60,10 @@ class ArgumentParser(argparse.ArgumentParser):
         option = 1
         argument = 2
 
-    def __init__(self, add_logging_opts=True, config_opts=ConfigOpt.none,
-                 config_required=False, sample_config=None,
-                 config_class=None, config_args=None,
+    def __init__(self, add_logging_opts=True,
+                 config_opts=ConfigOpt.none, config_required=False,
+                 sample_config=None, config_class=None, config_args=None,
+                 default_config_file=None,
                  add_debug_opts=True,
                  **kwargs):
 
@@ -104,10 +106,12 @@ class ArgumentParser(argparse.ArgumentParser):
             if config_opts == self.ConfigOpt.option:
                 group.add_argument("-c", "--config", dest="config_file",
                                    metavar="FILENAME",
+                                   default=default_config_file,
                                    help="Configuration file (ini file format).")
             else:
-                self.add_argument("config_file",
-                                  help="Configuration file (ini file format).")
+                self.add_argument("config_file", default=default_config_file,
+                                  help="Configuration file (ini file format).",
+                                  nargs="?" if default_config_file else None)
 
             group.add_argument("-o", dest="config_overrides", action="append",
                                default=[], metavar="SECTION:OPTION=VALUE",
@@ -128,24 +132,34 @@ class ArgumentParser(argparse.ArgumentParser):
 
     def _handleConfigFileOpts(self, args):
         if "config_file" in args:
-            config_opt = args.config_file
-            if not config_opt and self._config_required:
-                self.error("Configuration (-c/--config) required.")
-            elif config_opt:
-                cfg_parser = self._ConfigParser(*self._config_args)
-                try:
-                    cfg_parser.read([config_opt])
+            cfg_file = args.config_file
 
-                    for override in args.config_overrides:
-                         key, val = override.split('=')
-                         sect, opt = key.split(':')
-                         cfg_parser.set(sect, opt, val)
+            if not cfg_file and self._config_required:
+                self.error("Configuration file required.")
+                return
 
-                    logging.config.fileConfig(cfg_parser)
-                except Exception as ex:
-                    self.error("Configuration file error: %s" % str(ex))
+            cfg_file = os.path.expanduser(os.path.expandvars(cfg_file))
+            cfg_file = os.path.abspath(cfg_file)
+            # Stash the full known path
+            args.config = cfg_file
 
-                args.config_obj = cfg_parser
+            cfg_parser = self._ConfigParser(*self._config_args)
+
+            try:
+                read_files = cfg_parser.read([cfg_file])
+                if not read_files:
+                    raise IOError("file not found: {}".format(cfg_file))
+
+                for override in args.config_overrides:
+                     key, val = override.split('=')
+                     sect, opt = key.split(':')
+                     cfg_parser.set(sect, opt, val)
+
+                logging.config.fileConfig(cfg_parser)
+            except Exception as ex:
+                self.error("Configuration file error: %s" % str(ex))
+
+            args.config_obj = cfg_parser
 
     def _handleLoggingOpts(self, args):
         def _splitOpt(_opt):
