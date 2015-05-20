@@ -3,6 +3,7 @@ import base64
 import asyncio
 import logging
 import mimetypes
+from os.path import expanduser, expandvars
 
 from lxml import etree
 from vexmpp.stanzas import Iq
@@ -32,6 +33,7 @@ class AvatarPlugin(Plugin):
             return
 
         avatar_file = self.config["avatar"].get("img")
+        avatar_file = expandvars(expanduser(avatar_file))
         mt, _ = mimetypes.guess_type(avatar_file)
         if not mt:
             log.warn("Invalid avatar_file: {}".format(avatar_file))
