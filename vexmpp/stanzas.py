@@ -95,12 +95,21 @@ class ElementWrapper:
     def x(self, ns):
         return ElementWrapper(self.xml.find("{%s}x" % ns))
 
+    def getChild(self, name, ns):
+        return ElementWrapper(self.xml.find("{%s}%s" % (ns, name)))
+
     ## etree Element interface begin
     def find(self, *args, **kwargs):
         return self.xml.find(*args, **kwargs)
 
     def xpath(self, *args, **kwargs):
         return self.xml.xpath(*args, **kwargs)
+
+    def get(self, *args, **kwargs):
+        return self.xml.get(*args, **kwargs)
+
+    def set(self, *args, **kwargs):
+        return self.xml.set(*args, **kwargs)
     ## etree Element interface end
 
     @staticmethod
@@ -121,7 +130,6 @@ class Stanza(ElementWrapper):
         if xml is None and tag:
             xml = etree.Element(tag, nsmap=nsmap)
         elif xml is None:
-            import ipdb; ipdb.set_trace()
             raise ValueError("'tag' or 'xml' argument is required")
 
         super().__init__(xml)
