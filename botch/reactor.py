@@ -5,7 +5,7 @@ import logging
 
 from vexmpp.protocols import muc
 from .plugin import (Plugin, command, all_commands, all_triggers,
-                     CommandEnv, TriggerEnv)
+                     CommandEnv, TriggerEnv, ArgsParser)
 
 log = logging.getLogger(__name__)
 

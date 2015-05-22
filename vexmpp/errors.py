@@ -7,7 +7,7 @@ from .stanzas import XML_LANG
 Concrete :class:StanzaError types.
     * BadRequestStanzaError
     * ConflictStanzaError
-    * FetureNotImplementedStanzaError
+    * FeatureNotImplementedStanzaError
     * ForbiddenStanzaError
     * GoneStanzaError
     * InternalServerErrorStanzaError
