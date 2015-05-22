@@ -224,7 +224,7 @@ _global_dict = globals()
 for _cond, _type, _txt, _lang in STANZA_ERRORS:
     _name = _makeClassName(_cond, True)
 
-    def stanzaErrCtor(self, type=None, text=None, lang=None, app_err=None):
+    def stanzaErrCtor(self, text=None, type=None, lang=None, app_err=None):
         # Use constructor values or defer to the Class vars
         self.type = type or self.__class__.type
         self.text = text or self.__class__.text

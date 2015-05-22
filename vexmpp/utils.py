@@ -14,7 +14,7 @@ from configparser import ConfigParser
 
 import aiodns
 
-from .log import LEVELS
+from .log import LEVEL_NAMES, optLoggerFile, optLoggerLevel
 
 log = logging.getLogger(__name__)
 
@@ -71,7 +71,6 @@ class ArgumentParser(argparse.ArgumentParser):
         super().__init__(**kwargs)
 
         if add_logging_opts:
-            level_names = [logging.getLevelName(l).lower() for l in LEVELS]
             group = self.add_argument_group("Logging options")
             group.add_argument(
                 "-l", "--log-level", dest="log_levels",
@@ -80,7 +79,7 @@ class ArgumentParser(argparse.ArgumentParser):
                      "times). The level of a specific logger may be set with "
                      "the syntax LOGGER:LEVEL, but LOGGER is optional so "
                      "if only LEVEL is given it applies to the root logger. "
-                     "Valid level names are: %s" % ", ".join(level_names))
+                     "Valid level names are: %s" % ", ".join(LEVEL_NAMES))
 
             group.add_argument(
                 "-L", "--log-file", dest="log_files",
@@ -162,49 +161,13 @@ class ArgumentParser(argparse.ArgumentParser):
             args.config_obj = cfg_parser
 
     def _handleLoggingOpts(self, args):
-        def _splitOpt(_opt):
-            if ':' in _opt:
-                first, second = _opt.split(":")
-            else:
-                first, second = None, opt
-            return logging.getLogger(first), second
-
         # Log level setting
         for opt in args.log_levels:
-            logger, level = _splitOpt(opt)
-
-            level = getattr(logging, level.upper())
-            logger.setLevel(level)
+            optLoggerLevel(opt)
 
         # Log file settings
         for opt in args.log_files:
-            logger, filepath = _splitOpt(opt)
-
-            formatter = None
-            handlers_logger = None
-            if logger.hasHandlers():
-                # Find the logger with the actual handlers attached
-                handlers_logger = logger if logger.handlers else logger.parent
-                while not handlers_logger.handlers:
-                    handlers_logger = handlers_logger.parent
-
-                assert(handlers_logger)
-                for h in list(handlers_logger.handlers):
-                    formatter = h.formatter
-                    handlers_logger.removeHandler(h)
-            else:
-                handlers_logger = logger
-
-            if filepath in ("stdout", "stderr"):
-                new_handler = logging.StreamHandler(
-                        stream=sys.stdout if "out" in filepath else sys.stderr)
-            elif filepath == "null":
-                new_handler = logging.NullHandler()
-            else:
-                new_handler = logging.FileHandler(filepath)
-
-            new_handler.setFormatter(formatter)
-            handlers_logger.addHandler(new_handler)
+            optLoggerFile(opt)
 
     def parse_args(self, args=None, namespace=None):
 

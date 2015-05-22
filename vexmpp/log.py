@@ -26,8 +26,10 @@ class Logger(logging.Logger):
         '''Log \a msg at 'verbose' level, debug < verbose < info'''
         self.log(logging.VERBOSE, msg, *args, **kwargs)
 
-LEVELS = (logging.DEBUG, logging.VERBOSE, logging.INFO,
-          logging.WARNING, logging.ERROR, logging.CRITICAL)
+LEVELS = [logging.DEBUG, logging.VERBOSE, logging.INFO,
+          logging.WARNING, logging.ERROR, logging.CRITICAL]
+
+LEVEL_NAMES = [logging.getLevelName(l).lower() for l in LEVELS]
 
 DEFAULT_LOGGING_CONFIG = """
 ###
@@ -86,3 +88,46 @@ format = {metrics_format}
 logging.setLoggerClass(Logger)
 log = logging.getLogger(MAIN_LOGGER)
 logging.config.fileConfig(StringIO(DEFAULT_LOGGING_CONFIG))
+
+
+
+def _optSplit(opt):
+    if ':' in opt:
+        first, second = opt.split(":")
+    else:
+        first, second = None, opt
+    return logging.getLogger(first), second
+
+def optLoggerLevel(opt):
+    logger, level = _optSplit(opt)
+    level = getattr(logging, level.upper())
+    logger.setLevel(level)
+
+def optLoggerFile(opt):
+    logger, filepath = _optSplit(opt)
+
+    formatter = None
+    handlers_logger = None
+    if logger.hasHandlers():
+        # Find the logger with the actual handlers attached
+        handlers_logger = logger if logger.handlers else logger.parent
+        while not handlers_logger.handlers:
+            handlers_logger = handlers_logger.parent
+
+        assert(handlers_logger)
+        for h in list(handlers_logger.handlers):
+            formatter = h.formatter
+            handlers_logger.removeHandler(h)
+    else:
+        handlers_logger = logger
+
+    if filepath in ("stdout", "stderr"):
+        new_handler = logging.StreamHandler(
+                stream=sys.stdout if "out" in filepath else sys.stderr)
+    elif filepath == "null":
+        new_handler = logging.NullHandler()
+    else:
+        new_handler = logging.FileHandler(filepath)
+
+    new_handler.setFormatter(formatter)
+    handlers_logger.addHandler(new_handler)

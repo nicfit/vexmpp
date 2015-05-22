@@ -12,40 +12,12 @@ STANZA_ERROR_TAG = "{%s}error" % STANZA_ERROR_NS_URI
 STREAM_ERROR_TAG = "{%s}error" % STREAM_ERROR_NS_URI
 
 
-class Stanza(object):
-    XPATH = (None, None)
-
-    TYPE_GET = "get"
-    TYPE_SET = "set"
-    TYPE_ERROR = "error"
-    TYPE_RESULT = "result"
-
+class ElementWrapper:
     _NEXT_ID = 1
     _UUID = str(uuid.uuid4()).split("-")[0]
 
-    def __init__(self, tag=None, nsmap=None, xml=None, attrs=None):
-        if xml is not None:
-            self.xml = xml
-        elif tag:
-            self.xml = etree.Element(tag, nsmap=nsmap)
-        else:
-            raise ValueError("'tag' or 'xml' argument is required")
-
-        for name, value in (attrs or {}).items():
-            self._setAttr(name, value)
-
-    def _initAttributes(self, to=None, frm=None, type=None, id=None):
-        if to:
-            self.to = to
-        if frm:
-            self.frm = frm
-        if type:
-            self.type = type
-        if id:
-            self.id = id
-
-    def toXml(self, pprint=False, encoding="utf-8"):
-        return etree.tostring(self.xml, pretty_print=pprint, encoding=encoding)
+    def __init__(self, xml):
+        self.xml = xml
 
     def _getAttr(self, attr, as_jid=False):
         if attr not in self.xml.attrib:
@@ -84,25 +56,12 @@ class Stanza(object):
             self.xml.append(e)
         e.text = s
 
+    def toXml(self, pprint=False, encoding="utf-8"):
+        return etree.tostring(self.xml, pretty_print=pprint, encoding=encoding)
+
     @property
     def name(self):
         return self.xml.tag
-
-    @property
-    def to(self):
-        return self._getAttr("to", as_jid=True)
-
-    @to.setter
-    def to(self, j):
-        self._setAttr("to", j)
-
-    @property
-    def frm(self):
-        return self._getAttr("from", as_jid=True)
-
-    @frm.setter
-    def frm(self, j):
-        self._setAttr("from", j)
 
     @property
     def type(self):
@@ -128,10 +87,73 @@ class Stanza(object):
         elif prefix:
             id_str += "%s:" % prefix
 
-        id_str += "%s-" % Stanza._UUID
-        id_str += str(Stanza._NEXT_ID)
-        Stanza._NEXT_ID += 1
+        id_str += "%s-" % ElementWrapper._UUID
+        id_str += str(ElementWrapper._NEXT_ID)
+        ElementWrapper._NEXT_ID += 1
         self.id = id_str
+
+    def x(self, ns):
+        return ElementWrapper(self.xml.find("{%s}x" % ns))
+
+    ## etree Element interface begin
+    def find(self, *args, **kwargs):
+        return self.xml.find(*args, **kwargs)
+
+    def xpath(self, *args, **kwargs):
+        return self.xml.xpath(*args, **kwargs)
+    ## etree Element interface end
+
+    @staticmethod
+    def _makeTagName(tag, ns):
+        return "{%s}%s" % (ns, tag)
+
+
+class Stanza(ElementWrapper):
+    XPATH = (None, None)
+
+    TYPE_GET = "get"
+    TYPE_SET = "set"
+    TYPE_ERROR = "error"
+    TYPE_RESULT = "result"
+
+    def __init__(self, tag=None, nsmap=None, xml=None, attrs=None):
+
+        if xml is None and tag:
+            xml = etree.Element(tag, nsmap=nsmap)
+        elif xml is None:
+            import ipdb; ipdb.set_trace()
+            raise ValueError("'tag' or 'xml' argument is required")
+
+        super().__init__(xml)
+
+        for name, value in (attrs or {}).items():
+            self._setAttr(name, value)
+
+    def _initAttributes(self, to=None, frm=None, type=None, id=None):
+        if to:
+            self.to = to
+        if frm:
+            self.frm = frm
+        if type:
+            self.type = type
+        if id:
+            self.id = id
+
+    @property
+    def to(self):
+        return self._getAttr("to", as_jid=True)
+
+    @to.setter
+    def to(self, j):
+        self._setAttr("to", j)
+
+    @property
+    def frm(self):
+        return self._getAttr("from", as_jid=True)
+
+    @frm.setter
+    def frm(self, j):
+        self._setAttr("from", j)
 
     @property
     def error(self):
@@ -144,10 +166,14 @@ class Stanza(object):
     @error.setter
     def error(self, err):
         from . import errors
-        if not isinstance(err, errors.StanzaError):
-            raise ValueError("error attribute must be of type "
-                             "hiss.xmpp.errors.StanzaError")
-        self.xml = err.xml
+        curr = self.xml.xpath("/*/error")
+        if curr:
+            self.xml.remove(curr[0])
+
+        if err is not None:
+            if not isinstance(err, errors.StanzaError):
+                raise ValueError("error attribute must be of type StanzaError")
+            self.xml.append(err.xml)
 
     def swapToFrom(self):
         tmp_to = self.to
@@ -157,11 +183,18 @@ class Stanza(object):
         if tmp_to:
             self.frm = tmp_to
 
-    def x(self, ns):
-        return self.xml.find("{%s}x" % ns)
+    def errorResponse(self, err):
+        self.type = "error"
+        self.xml.clear()
+        self.error = err
+        self.swapToFrom()
+        return self
 
-    def find(self, *args, **kwargs):
-        return self.xml.find(*args, **kwargs)
+    def resultResponse(self):
+        self.type = "result"
+        self.error = None
+        self.swapToFrom()
+        return self
 
 
 class StreamHeader(Stanza):
