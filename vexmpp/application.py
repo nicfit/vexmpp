@@ -34,15 +34,29 @@ class Application(object):
 
         self.args = self.arg_parser.parse_args()
 
-        exit_status = 128
+        exit_status = None
+        if self._entry_point == self._main:
+            exit_status = yield from self._entry_point()
+        else:
+            exit_status = yield from self._entry_point(self)
+        return exit_status
+
+    def run(self):
+        log.debug("Application::run")
+
+        self._main_task = self.event_loop.create_task(self._mainTask())
+
         try:
-            if self._entry_point == self._main:
-                exit_status = yield from self._entry_point()
-            else:
-                exit_status = yield from self._entry_point(self)
+            self._exit_status = self.event_loop\
+                                    .run_until_complete(self._main_task)
+        except KeyboardInterrupt:
+            log.debug("Interrupted")
+            self._exit_status = 0
         except asyncio.CancelledError as ex:
-            self._mainCancelled()
+            log.debug("Cancelled")
         except Exception as ex:
+            log.exception("Unhandled exception thrown from '%s': %s" %
+                          (str(self._entry_point), str(ex)))
             if hasattr(self.args, "debug_pdb") and self.args.debug_pdb:
                 try:
                     # Must delay the import of ipdb as say as possible because
@@ -52,37 +66,13 @@ class Application(object):
                     import pdb
                 e, m, tb = sys.exc_info()
                 pdb.post_mortem(tb)
-            else:
-                log.exception("Unhandled exception thrown from '%s': %s" %
-                              (str(self._entry_point), str(ex)))
-            exit_status = 254
-        finally:
-            exit_status = exit_status if exit_status is not None else 255
-            log.debug("Application::_mainTask() returning %d" % exit_status)
-            self.stop(exit_status)
 
-    def _mainCancelled(self):
-        '''If the _mainTask is cancelled this method is invoke. Subclasses can
-        override to shutdown logic.'''
-        log.warn("Cancelled")
-
-    def run(self):
-        log.debug("Application::run")
-
-        self._main_task = self.event_loop.create_task(self._mainTask())
-
-        try:
-            self.event_loop.run_until_complete(self._main_task)
-        except KeyboardInterrupt:
-            log.debug("Interrupted")
-            self._main_task.cancel()
+            self._exit_status = 254
 
         log.debug("Application::run returning %d" % self._exit_status)
-        return self._exit_status
+        return self._exit_status if self. _exit_status is not None else 255
 
     def stop(self, exit_status=0):
         log.debug("Application::stop(exit_status=%d)" % exit_status)
-
         self._exit_status = exit_status
         self._main_task.cancel()
-        logging.shutdown()
