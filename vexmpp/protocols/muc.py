@@ -89,27 +89,32 @@ class RoomInfo:
 
     def __init__(self, room_jid):
         self.jid = room_jid.room_jid  # Making sure to drop any resource/nick
-        self.roster = []
+        self._roster = {}
 
     def addToRoster(self, roster_item):
         '''Add/update an occupant roster entry corresponding to roster_item.'''
         self.removeFromRoster(roster_item.nickname)
-        self.roster.append(roster_item)
+        self._roster[roster_item.nickname] = roster_item
 
     def removeFromRoster(self, nickname):
         '''Remove an occupant roster entry corresponding to nickname.'''
-        for item in self.roster:
-            if item.nickname == nickname:
-                self.roster.remove(item)
-                return item
-        return None
+        item = None
+        if nickname in self._roster:
+            item = self._roster[nickname]
+            del self._roster[nickname]
+        return item
 
     @property
     def self_jid(self):
-        for r in self.roster:
+        for r in self._roster.values():
             if r.self_presence:
                 return r.self_presence
         raise AssertionError("No self presence JID")
+
+    @property
+    def roster(self):
+        '''The roster is a dict with nickname keys and RosterItem values.'''
+        return dict(self._roster)
 
 
 class MucMixin(stream.Mixin):
