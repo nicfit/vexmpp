@@ -51,6 +51,7 @@ Botch:
    - SSL Context options, lock down, cert vaildation, etc.
 
 - Useful
+   - time out Stream stanza queue entries
    - Allow "by" attributes on stanza errors.
    ~ bind errors
    - jabber:iq:register via stream:feature (also legacy, which is currently
