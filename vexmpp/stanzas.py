@@ -96,7 +96,8 @@ class ElementWrapper:
         return ElementWrapper(self.xml.find("{%s}x" % ns))
 
     def getChild(self, name, ns):
-        return ElementWrapper(self.xml.find("{%s}%s" % (ns, name)))
+        child = self.xml.find("{%s}%s" % (ns, name))
+        return child
 
     ## etree Element interface begin
     def find(self, *args, **kwargs):
@@ -193,15 +194,19 @@ class Stanza(ElementWrapper):
 
     def errorResponse(self, err):
         self.type = "error"
-        self.xml.clear()
+        for c in self.xml.getchildren():
+            self.xml.remove(c)
         self.error = err
         self.swapToFrom()
         return self
 
-    def resultResponse(self):
+    def resultResponse(self, clear=False):
         self.type = "result"
         self.error = None
         self.swapToFrom()
+        if clear:
+            for c in self.xml.getchildren():
+                self.xml.remove(c)
         return self
 
 
