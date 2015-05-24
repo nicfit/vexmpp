@@ -118,6 +118,17 @@ class ElementWrapper:
     def _makeTagName(tag, ns):
         return "{%s}%s" % (ns, tag)
 
+    def appendChild(self, name, ns=None):
+        if not ns:
+            nsmap = self.xml.nsmap
+            ns = nsmap[None]
+        else:
+            nsmap = {None, ns}
+
+        c = etree.Element("{%s}%s" % (ns, name), nsmap=nsmap)
+        self.xml.append(c)
+        return c
+
 
 class Stanza(ElementWrapper):
     XPATH = (None, None)
