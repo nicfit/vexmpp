@@ -13,10 +13,10 @@ log = logging.getLogger(__name__)
 
 
 Command = namedtuple("Command", "cmd, callback, acl, arg_parser")
-CommandEnv = namedtuple("CommandEnv",
+CommandCtx = namedtuple("CommandCtx",
                         "cmd, args, from_jid, bot, arg_parser, stanza, acl")
 Trigger = namedtuple("Trigger", "callback, regex, search")
-TriggerEnv = namedtuple("TriggerEnv", "match, from_jid, stanza")
+TriggerCtx = namedtuple("TriggerCtx", "match, from_jid, stanza, bot")
 
 all_commands = {}
 all_triggers = {}
@@ -46,6 +46,7 @@ class command:
         global all_commands
 
         @wraps(func)
+        @asyncio.coroutine
         def cmdFunc(cmd_env):
             if not cmd_env.bot.aclCheck(cmd_env.from_jid, cmd_env.acl):
                 # Failed acl check, 403 response
@@ -91,6 +92,7 @@ class trigger:
         global all_triggers
 
         @wraps(func)
+        @asyncio.coroutine
         def trfunc(*a, **kw):
             return func(*a, **kw)
 
