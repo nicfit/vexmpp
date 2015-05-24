@@ -5,6 +5,8 @@ import asyncio
 import logging
 log = logging.getLogger(__name__)
 
+from collections import deque
+
 from lxml import etree
 
 from . import stanzas
@@ -22,6 +24,12 @@ else:
 
 _ENFORCE_TIMEOUTS = bool("VEX_ENFORCE_TIMEOUTS" in os.environ and
                          int(os.environ["VEX_ENFORCE_TIMEOUTS"]))
+
+
+class QueuedStanza:
+    def __init__(self, s):
+        self.task_set = set()
+        self.stanza = s
 
 
 class ParserTask(asyncio.Task):
@@ -79,6 +87,8 @@ class Stream(asyncio.Protocol):
         self.default_timeout = default_timeout
         # Stream errors
         self.error = None
+
+        self._stanza_queue = deque(maxlen=10)
 
     @property
     def connected(self):
@@ -188,6 +198,14 @@ class Stream(asyncio.Protocol):
             raise RuntimeError("Timeout not set error")
 
         fut = _StreamWaitFuture(xpaths)
+
+        # Run thru queue. Note, once a tasklet has seen it stanza it is skip
+        # by _StreamWaitFuture.matchStanza
+        for queued_stanza in self._stanza_queue:
+            matched = fut.matchStanza(queued_stanza)
+            if matched:
+                return queued_stanza.stanza
+
         self._waiter_futures.append(fut)
         try:
             with timedWait() as timer_stat:
@@ -221,25 +239,33 @@ class Stream(asyncio.Protocol):
 
     @asyncio.coroutine
     def _handleStanza(self, stanza):
+
         if isinstance(stanza, stanzas.StreamError):
             signalEvent(self._callbacks, "streamError", self, stanza)
             self._transport.close()
             return
 
-        if self._waiter_futures:
-            for fut in list(self._waiter_futures):
-                matched = fut.matchStanza(stanza)
-                if matched:
-                    # Yield the event loop, which is essential for a handle
-                    # and wait in quick succession.
-                    yield from asyncio.sleep(0)
+        @asyncio.coroutine
+        def _runMixin(_stream, _m, _stanza):
+            try:
+                yield from _m.onStanza(_stream, _stanza)
+            except:
+                log.exception("{} mixin error".format(_m.__class__.__name__))
 
         for m in self._mixins:
-            try:
-                # FIXME: use async and let these run separate
-                yield from m.onStanza(self, stanza)
-            except:
-                log.exception("{} mixin error".format(m.__class__.__name__))
+            asyncio.async(_runMixin(self, m, stanza))
+
+        self._stanza_queue.append(QueuedStanza(stanza))
+
+        if self._waiter_futures:
+            for queued_stanza in self._stanza_queue:
+                for fut in list(self._waiter_futures):
+                    matched = fut.matchStanza(queued_stanza)
+                    if matched:
+                        # XXX: How useful is this since _stanza_queue?
+                        # Yield the event loop, which is essential for a handle
+                        # and wait in quick succession.
+                        yield from asyncio.sleep(0)
 
     # asyncio.Protocol implementation
     def data_received(self, data):
@@ -305,8 +331,15 @@ class _StreamWaitFuture(asyncio.Future):
     def __init__(self, xpaths, *args, loop=None):
         super().__init__(*args, loop=loop)
         self._xpaths = xpaths
+        self._task = asyncio.Task.current_task()
 
-    def matchStanza(self, stanza):
+    def matchStanza(self, queued_stanza):
+        if self._task in queued_stanza.task_set:
+            # seen this...
+            return False
+        queued_stanza.task_set.add(self._task)
+
+        stanza = queued_stanza.stanza
         for xp, nsmap in self._xpaths:
             if stanza.xml.xpath(xp, namespaces=nsmap):
                 self.set_result(stanza)
