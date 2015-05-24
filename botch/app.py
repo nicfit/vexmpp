@@ -55,12 +55,12 @@ class BotchStream(ClientStream):
             room_jid = jid.bare_jid
             nick = jid.resource
 
-            if room_jid in self.muc_rooms:
-                for item in self.muc_rooms[room_jid].roster:
-                    if item.nickname == nick and item.jid:
-                        jid_acl = self.acl(item.jid)
-                        real_jid = item.jid
-                        break
+            if (room_jid in self.muc_rooms and
+                    nick in self.muc_rooms[room_jid].roster):
+                item = self.muc_rooms[room_jid].roster[nick]
+                if item.jid:
+                    jid_acl = self.acl(item.jid)
+                    real_jid = item.jid
 
         authz = bool(ACL_GROUPS.index(jid_acl) <= ACL_GROUPS.index(acl))
         jid = jid.full
