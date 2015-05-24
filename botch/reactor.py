@@ -5,7 +5,7 @@ import logging
 
 from vexmpp.protocols import muc
 from .plugin import (Plugin, command, all_commands, all_triggers,
-                     CommandEnv, TriggerEnv, ArgsParser)
+                     CommandCtx, TriggerCtx, ArgsParser)
 
 log = logging.getLogger(__name__)
 
@@ -31,10 +31,11 @@ class Task(asyncio.Task):
 
             if stanza.name == "message":
                 if stanza.type == "groupchat":
-                    self._handleGroupchatMessage(stanza)
+                    yield from self._handleGroupchatMessage(stanza)
                 else:
-                    self._handleMessage(stanza)
+                    yield from self._handleMessage(stanza)
 
+    @asyncio.coroutine
     def _handleGroupchatMessage(self, msg):
         assert(msg.type == "groupchat")
         muc_jid = muc.MucJid(msg.frm)
@@ -66,9 +67,9 @@ class Task(asyncio.Task):
 
                 if match:
                     try:
-                        env = TriggerEnv(match=match, from_jid=muc_jid,
-                                         stanza=msg)
-                        resp = trigger.callback(env)
+                        ctx = TriggerCtx(match=match, from_jid=muc_jid,
+                                         stanza=msg, bot=self.bot)
+                        resp = yield from trigger.callback(ctx)
                     except Exception:
                         log.exception("Trigger error")
                     else:
@@ -76,6 +77,7 @@ class Task(asyncio.Task):
                             msg.body = str(resp)
                             self.bot.send(msg)
 
+    @asyncio.coroutine
     def _handleMessage(self, msg):
         global all_commands
 
@@ -92,12 +94,11 @@ class Task(asyncio.Task):
             # Command msg
             cmd = all_commands[msg_parts[0]]
             try:
-                env = CommandEnv(cmd=msg_parts[0], args=msg_parts[1:],
+                ctx = CommandCtx(cmd=msg_parts[0], args=msg_parts[1:],
                                  from_jid=msg.frm, bot=self.bot,
                                  arg_parser=cmd.arg_parser,
                                  stanza=msg, acl=cmd.acl)
-                # XXX: Coroutine that is spawed and not waited for.
-                resp = all_commands[msg_parts[0]].callback(env)
+                resp = yield from all_commands[msg_parts[0]].callback(ctx)
             except Exception:
                 log.exception("Command error")
                 return
@@ -115,11 +116,11 @@ class Task(asyncio.Task):
 HELP_CMD = "help"
 
 @command(cmd=HELP_CMD)
-def _helpCmd(env):
+def _helpCmd(ctx):
     global all_commands
 
     cmds = [c for c in all_commands.values()
-              if env.bot.aclCheck(env.from_jid, c.acl)]
+              if ctx.bot.aclCheck(ctx.from_jid, c.acl)]
 
     cmd_names = sorted([c.cmd for c in cmds])
     if not cmd_names:

@@ -5,6 +5,7 @@ import configparser
 from pathlib import Path
 
 from vexmpp.jid import Jid
+from vexmpp.stanzas import Message
 from vexmpp.application import Application
 from vexmpp.log import DEFAULT_LOGGING_CONFIG
 from vexmpp.utils import ArgumentParser
@@ -73,6 +74,11 @@ class BotchStream(ClientStream):
 
     def aclJids(self, acl):
         return [j for j in self._acls[acl]]
+
+    def msgOwners(self, msg):
+        for j in self.aclJids("owner"):
+            self.send(Message(to=j, body=msg))
+
 
 
 class Botch(Application):
