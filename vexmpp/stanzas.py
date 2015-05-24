@@ -93,7 +93,8 @@ class ElementWrapper:
         self.id = id_str
 
     def x(self, ns):
-        return ElementWrapper(self.xml.find("{%s}x" % ns))
+        x = self.getChild("x", ns)
+        return ElementWrapper(x) if (x is not None) else None
 
     def getChild(self, name, ns):
         child = self.xml.find("{%s}%s" % (ns, name))
