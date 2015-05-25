@@ -29,12 +29,14 @@ class S10nPlugin(Plugin):
 
     @asyncio.coroutine
     def activate(self, bot):
+        # Replace default subscription mixin with our acl based version
         for mixin in bot._mixins:
             if mixin.__class__ is presence.SubscriptionAckMixin:
                 bot._mixins.remove(mixin)
                 break
         bot._mixins.append(SubscriptionMixin())
 
+        # Update subscription for the config'd acl groups
         for acl_grp in self.config["s10n"]\
                            .get("subscribe_acls", fallback="").split():
             acl_jids = bot.aclJids(acl_grp)
@@ -51,7 +53,8 @@ class S10nPlugin(Plugin):
 
 
 class SubscriptionMixin(Mixin):
-    '''Honors subscription requests from root_jid, denies all others.'''
+    '''Honors subscription requests from ACL groups in [s10n] subscribe_acls
+    configuration, and denies all others.'''
     def __init__(self):
         super().__init__()
         self._yes = presence.SubscriptionAckMixin()

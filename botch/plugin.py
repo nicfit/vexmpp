@@ -47,27 +47,27 @@ class command:
 
         @wraps(func)
         @asyncio.coroutine
-        def cmdFunc(cmd_env):
-            if not cmd_env.bot.aclCheck(cmd_env.from_jid, cmd_env.acl):
+        def cmdFunc(ctx):
+            if not ctx.bot.aclCheck(ctx.from_jid, ctx.acl):
                 # Failed acl check, 403 response
                 return "403"
 
             parsed_args = None
 
-            if cmd_env.arg_parser:
-                cmd_env.arg_parser.prog = cmd_env.cmd
+            if ctx.arg_parser:
+                ctx.arg_parser.prog = ctx.cmd
                 try:
-                    parsed_args = cmd_env.arg_parser.parse_args(cmd_env.args)
+                    parsed_args = ctx.arg_parser.parse_args(ctx.args)
                 except ArgsParserExitInfo as ex:
                     return str(ex)
 
             if parsed_args:
                 # Replace raw args with parsed args.
-                env_list = [e for e in cmd_env]
+                env_list = [e for e in ctx]
                 env_list[1] = parsed_args
-                cmd_env = CommandEnv(*env_list)
+                ctx = CommandCtx(*env_list)
 
-            return func(cmd_env)
+            return func(ctx)
 
         if not self.cmd:
             self.cmd = [func.__qualname__]

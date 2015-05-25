@@ -80,7 +80,6 @@ class BotchStream(ClientStream):
             self.send(Message(to=j, body=msg))
 
 
-
 class Botch(Application):
     def __init__(self):
         argp = ArgumentParser(

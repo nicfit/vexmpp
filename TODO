@@ -3,37 +3,44 @@ TODO
 - make raise_on_error deafult to True
 - tests resolveHostPort caching
 
-Botch:
-    - links trigger, command
-      - Capture
-      - List
-      - Search
-    - Log level command Comand API
-    ~ xmpp commands
-      x new xmpp.py module
-      x presence
-      - msg
+Botch (FREEZE):
     ~ admins commands
-      x subcommands for each of the existing
       - config save
       - acl add
       - acl remove
-    - muc commands
-      - say
-      - join [room] (follow by default)
-    - triggers for reacting to seen text
+    - avatar plugin
+      - Don't always upload
+      - Commands:
+        - ls
+        - set <file>
+        - set <url>
+        - rotate
+    - MUC plugin
+      - muc commands
+        - say
+        - join [room] (follow by default)
+    x Log level command Comand API
+    ~ xmpp commands
+      x new xmpp.py module
+      x presence
+      x msg
+    x triggers for reacting to seen text
     - Muc link trigger
-      - Stores in DB
-      - Kicks reposts
+      x Stores in DB
+      x Kicks reposts
+      x List
+      - Search
+    ~ Files command
+      - list
+      ~ Handle downloads
+      ~ Handle uploads
+    - Command API
+      - Extract fuction's __doc__ for help listing
+    - Help system
+      - help - Basic info, how to learn more, all commands
+      - help commands - Full listing with brief (first sentence of __doc__) text
     - Config-less startup
       - ~/.botch/config.ini (default)
-    - Help subcommands
-      - commands
-      - commands --full ?
-    - Files command
-      - list
-      - Downloand.. fisrt file is botch.tgz
-      - upload
 
 - Important
    - Descriptors instead of property for ElementWrapper _*etAttr and

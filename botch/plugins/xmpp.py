@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from vexmpp.stanzas import Presence
+from vexmpp.jid import Jid
+from vexmpp.stanzas import Presence, Message
 from botch.plugin import command, ArgsParser, ArgsParserExitInfo
 
 
@@ -21,11 +22,11 @@ sub3.add_argument("show", choices=[str(s) for s in Presence.ORDERED_SHOWS],
 
 
 @command(PRES_CMD, acl="owner", arg_parser=arg_parser)
-def presence(env):
-    subcmd = env.args.subcommand
-    curr = env.bot.presence_cache.self
-    args = env.args
-    bot = env.bot
+def presence(ctx):
+    subcmd = ctx.args.subcommand
+    curr = ctx.bot.presence_cache.self
+    args = ctx.args
+    bot = ctx.bot
 
     if subcmd is None:
         return curr.toXml(pprint=True).decode("utf8")
@@ -44,3 +45,14 @@ def presence(env):
                              show=args.show)
     except Exception as ex:
         return "Error: {}".format(ex)
+
+
+MSG_CMD = "msg"
+arg_parser = ArgsParser(description="Message interface", prog=MSG_CMD)
+arg_parser.add_argument("jid", type=Jid, metavar="user@host")
+arg_parser.add_argument("msg", metavar="<msg text ...>", nargs='+')
+@command(MSG_CMD, acl="owner", arg_parser=arg_parser)
+def msg(ctx):
+    msg_text = " ".join(ctx.args.msg)
+    m = Message(to=ctx.args.jid, body=msg_text)
+    ctx.bot.send(m)

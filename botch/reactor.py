@@ -82,30 +82,38 @@ class Task(asyncio.Task):
         global all_commands
 
         acl = self.bot.acl(msg.frm)
-        log.info("Message [from: {} ({})]: {}" .format(msg.frm, acl, msg.body))
+        notification = "Message [from: {} ({})]: {}" .format(msg.frm.full, acl,
+                                                             msg.body)
+        log.info(notification)
+        if acl != "owner":
+            self.bot.msgOwners(notification)
 
         if not self.bot.aclCheck(msg.frm, "other"):
             return
 
         # "Commands"
         resp = None
-        msg_parts = shlex.split(msg.body.strip())
-        if msg_parts[0] in all_commands:
-            # Command msg
-            cmd = all_commands[msg_parts[0]]
-            try:
-                ctx = CommandCtx(cmd=msg_parts[0], args=msg_parts[1:],
-                                 from_jid=msg.frm, bot=self.bot,
-                                 arg_parser=cmd.arg_parser,
-                                 stanza=msg, acl=cmd.acl)
-                resp = yield from all_commands[msg_parts[0]].callback(ctx)
-            except Exception:
-                log.exception("Command error")
-                return
+        try:
+            msg_parts = shlex.split(msg.body.strip())
+        except ValueError as ex:
+            resp = str(ex)
         else:
-            # Other msg
-            if self.bot.aclCheck(msg.frm, "friend"):
-                resp = "``{}``'?".format(HELP_CMD)
+            if msg_parts[0] in all_commands:
+                # Command msg
+                cmd = all_commands[msg_parts[0]]
+                try:
+                    ctx = CommandCtx(cmd=msg_parts[0], args=msg_parts[1:],
+                                     from_jid=msg.frm, bot=self.bot,
+                                     arg_parser=cmd.arg_parser,
+                                     stanza=msg, acl=cmd.acl)
+                    resp = yield from all_commands[msg_parts[0]].callback(ctx)
+                except Exception:
+                    log.exception("Command error")
+                    return
+            else:
+                # Other msg
+                if self.bot.aclCheck(msg.frm, "friend"):
+                    resp = "``{}``'?".format(HELP_CMD)
 
         if resp:
             msg.body = str(resp)
@@ -117,6 +125,11 @@ HELP_CMD = "help"
 
 @command(cmd=HELP_CMD)
 def _helpCmd(ctx):
+    '''
+    help
+    help commands
+    '''
+
     global all_commands
 
     cmds = [c for c in all_commands.values()
