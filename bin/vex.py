@@ -88,7 +88,7 @@ def main(app):
         password = os.environ["VEX_PASSWD"]
     else:
         password = getpass("Password for '%s': " % args.jid)
-    jid = Jid(args.jid)
+    jid = args.jid
     if not jid.resource:
         jid = Jid((jid.user, jid.host, "vex"))
 
@@ -173,7 +173,7 @@ class Callbacks(ClientStreamCallbacks):
 arg_parser = ArgumentParser(
     description="Simple XMPP client. The user will be prompted for a login "
                 "password unless the environment variable VEX_PASSWD is set.")
-arg_parser.add_argument("jid", help="Jabber ID for login")
+arg_parser.add_argument("jid", type=Jid, help="Jabber ID for login")
 arg_parser.add_argument("--register", action="store_true",
                         help="Register for an account before logging in.")
 arg_parser.add_argument("--host", help="Alternative server for connecting")
