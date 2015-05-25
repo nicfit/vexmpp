@@ -140,7 +140,7 @@ class ArgumentParser(argparse.ArgumentParser):
             cfg_file = os.path.expanduser(os.path.expandvars(cfg_file))
             cfg_file = os.path.abspath(cfg_file)
             # Stash the full known path
-            args.config = cfg_file
+            args.config_file = cfg_file
 
             cfg_parser = self._ConfigParser(*self._config_args)
 
