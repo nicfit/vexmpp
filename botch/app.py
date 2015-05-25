@@ -34,6 +34,22 @@ ACL_GROUPS = ("owner", "admin", "friend", "other", "blocked", "enemy")
 class BotchStream(ClientStream):
     _acls = {}
 
+    def _aclInit(self, config):
+        self._acls = {}
+
+        for g in ACL_GROUPS:
+            if g == "other":
+                continue
+
+            jids = [Jid(j) for j in config.get(g, fallback="")
+                                          .split("\n") if j]
+            self._acls[g] = jids
+
+    def _aclSave(self, config):
+        for g in self._acls:
+            jids = self._acls[g]
+            config[g] = "\n".join([j.bare for j in jids])
+
     def acl(self, jid):
         if not isinstance(jid, Jid):
             raise ValueError("Jid type required")
@@ -104,19 +120,12 @@ class Botch(Application):
         self.log.info("Connected {}".format(bot.jid.full))
         bot.app = self
 
-        for g in ACL_GROUPS:
-            if g == "other":
-                continue
-
-            jids = [Jid(j) for j in main_config.get(g, fallback="")
-                                               .split("\n") if j]
-            bot._acls[g] = jids
+        bot._aclInit(main_config)
 
         bot.sendPresence(
             status=main_config.get("presence_status"),
             show=main_config.get("presence_show"),
             priority=main_config.getint("presence_priorty", fallback=10))
-        self.log.info("Alive!")
 
         return bot
 

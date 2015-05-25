@@ -4,10 +4,10 @@ TODO
 - tests resolveHostPort caching
 
 Botch (FREEZE):
-    ~ admins commands
-      - config save
-      - acl add
-      - acl remove
+    x admins commands
+      x config save
+      x acl add
+      x acl remove
     - avatar plugin
       - Don't always upload
       - Commands:
@@ -19,16 +19,7 @@ Botch (FREEZE):
       - muc commands
         - say
         - join [room] (follow by default)
-    x Log level command Comand API
-    ~ xmpp commands
-      x new xmpp.py module
-      x presence
-      x msg
-    x triggers for reacting to seen text
     - Muc link trigger
-      x Stores in DB
-      x Kicks reposts
-      x List
       - Search
     ~ Files command
       - list
@@ -56,6 +47,7 @@ Botch (FREEZE):
      use asyncio.Event???
    - Application signal handers, might help cancelling pending tasks (cleanup)
    - SSL Context options, lock down, cert vaildation, etc.
+   - vcard img hashes in presence, http://www.xmpp.org/extensions/xep-0153.html
 
 - Useful
    - time out Stream stanza queue entries
