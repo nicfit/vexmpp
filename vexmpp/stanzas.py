@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import uuid
 import functools
+from copy import deepcopy
 from lxml import etree
 from .namespaces import (XML_NS_URI, STREAM_NS_URI,
                          CLIENT_NS_URI, SERVER_NS_URI,
@@ -17,26 +18,10 @@ class ElementWrapper:
     _UUID = str(uuid.uuid4()).split("-")[0]
 
     def __init__(self, xml):
-        self.xml = xml
-
-    def _getAttr(self, attr, as_jid=False):
-        if attr not in self.xml.attrib:
-            return None
-
-        value = str(self.xml.attrib[attr])
-        if not value:
-            return None
+        if isinstance(xml, ElementWrapper):
+            self.xml = xml.xml
         else:
-            return value if not as_jid else Jid(value)
-
-    def _setAttr(self, attr, s):
-        if not s:
-            if attr in self.xml.attrib:
-                del self.xml.attrib[attr]
-        else:
-            if isinstance(s, Jid):
-                s = s.full
-            self.xml.attrib[attr] = s
+            self.xml = xml
 
     def _getChildText(self, child):
         e = self.xml.xpath("child::%s" % child)
@@ -65,19 +50,19 @@ class ElementWrapper:
 
     @property
     def type(self):
-        return self._getAttr("type")
+        return self.get("type")
 
     @type.setter
     def type(self, t):
-        self._setAttr("type", t)
+        self.set("type", t)
 
     @property
     def id(self):
-        return self._getAttr("id")
+        return self.get("id")
 
     @id.setter
     def id(self, i):
-        self._setAttr("id", i)
+        self.set("id", i)
 
     def setId(self, prefix=None):
         id_str = ""
@@ -100,19 +85,80 @@ class ElementWrapper:
         child = self.xml.find("{%s}%s" % (ns, name))
         return child
 
-    ## etree Element interface begin
+    ##### etree Element interface begin #####
     def find(self, *args, **kwargs):
-        return self.xml.find(*args, **kwargs)
+        e = self.xml.find(*args, **kwargs)
+        return ElementWrapper(e) if e is not None else None
 
     def xpath(self, *args, **kwargs):
-        return self.xml.xpath(*args, **kwargs)
+        matches = self.xml.xpath(*args, **kwargs)
+        retval = []
+        for m in matches:
+            if isinstance(m, str):
+                retval.append(m)
+            else:
+                retval.append(ElementWrapper(m))
+        return retval
 
-    def get(self, *args, **kwargs):
-        return self.xml.get(*args, **kwargs)
 
-    def set(self, *args, **kwargs):
-        return self.xml.set(*args, **kwargs)
-    ## etree Element interface end
+        return [ElementWrapper(e) for e in xpaths]
+
+    def get(self, key, default=None, as_jid=False):
+        value = self.xml.get(key, default=default)
+        if value:
+            return value if not as_jid else Jid(value)
+        else:
+            return None
+
+    def set(self, attr, s):
+        if not s:
+            if attr in self.xml.attrib:
+                del self.xml.attrib[attr]
+        else:
+            if isinstance(s, Jid):
+                s = s.full
+            self.xml.attrib[attr] = s
+
+    def append(self, child_elem):
+        if isinstance(child_elem, ElementWrapper):
+            child_elem = child_elem.xml
+        return self.xml.append(child_elem)
+
+    def remove(self, child_elem):
+        if isinstance(child_elem, ElementWrapper):
+            child_elem = child_elem.xml
+        return self.xml.remove(child_elem)
+
+    def findtext(self, *args, **kwargs):
+        return self.xml.findtext(*args, **kwargs)
+
+    def findall(self, *args, **kwargs):
+        all_ = self.xml.findall(*args, **kwargs)
+        return [ElementWrapper(e) for e in all_]
+
+    def __iter__(self):
+        return iter(self.xml)
+
+    @property
+    def attrib(self):
+        return self.xml.attrib
+
+    @property
+    def text(self):
+        return self.xml.text
+
+    @text.setter
+    def text(self, txt):
+        self.xml.text = txt
+
+    @property
+    def tag(self):
+        return self.xml.tag
+
+    def clear(self):
+        return self.xml.clear()
+
+    ##### etree Element interface end #####
 
     @staticmethod
     def _makeTagName(tag, ns):
@@ -123,11 +169,11 @@ class ElementWrapper:
             nsmap = self.xml.nsmap
             ns = nsmap[None]
         else:
-            nsmap = {None, ns}
+            nsmap = {None: ns}
 
         c = etree.Element("{%s}%s" % (ns, name), nsmap=nsmap)
         self.xml.append(c)
-        return c
+        return ElementWrapper(c)
 
 
 class Stanza(ElementWrapper):
@@ -148,7 +194,7 @@ class Stanza(ElementWrapper):
         super().__init__(xml)
 
         for name, value in (attrs or {}).items():
-            self._setAttr(name, value)
+            self.set(name, value)
 
     def _initAttributes(self, to=None, frm=None, type=None, id=None):
         if to:
@@ -162,19 +208,19 @@ class Stanza(ElementWrapper):
 
     @property
     def to(self):
-        return self._getAttr("to", as_jid=True)
+        return self.get("to", as_jid=True)
 
     @to.setter
     def to(self, j):
-        self._setAttr("to", j)
+        self.set("to", j)
 
     @property
     def frm(self):
-        return self._getAttr("from", as_jid=True)
+        return self.get("from", as_jid=True)
 
     @frm.setter
     def frm(self, j):
-        self._setAttr("from", j)
+        self.set("from", j)
 
     @property
     def error(self):
@@ -205,21 +251,23 @@ class Stanza(ElementWrapper):
             self.frm = tmp_to
 
     def errorResponse(self, err):
-        self.type = "error"
-        for c in self.xml.getchildren():
-            self.xml.remove(c)
-        self.error = err
-        self.swapToFrom()
-        return self
+        err_stanza = deepcopy(self)
+        err_stanza.type = "error"
+        for c in err_stanza.xml.getchildren():
+            err_stanza.xml.remove(c)
+        err_stanza.error = err
+        err_stanza.swapToFrom()
+        return err_stanza
 
     def resultResponse(self, clear=False):
-        self.type = "result"
-        self.error = None
-        self.swapToFrom()
+        res_stanza = deepcopy(self)
+        res_stanza.type = "result"
+        res_stanza.error = None
+        res_stanza.swapToFrom()
         if clear:
-            for c in self.xml.getchildren():
-                self.xml.remove(c)
-        return self
+            for c in res_stanza.xml.getchildren():
+                res_stanza.xml.remove(c)
+        return res_stanza
 
 
 class StreamHeader(Stanza):
@@ -242,19 +290,19 @@ class StreamHeader(Stanza):
 
     @property
     def version(self):
-        return self._getAttr("version")
+        return self.get("version")
 
     @version.setter
     def version(self, v):
-        self._setAttr("version", v)
+        self.set("version", v)
 
     @property
     def lang(self):
-        return self._getAttr(XML_LANG)
+        return self.get(XML_LANG)
 
     @lang.setter
     def lang(self, l):
-        self._setAttr(XML_LANG, l)
+        self.set(XML_LANG, l)
 
     @property
     def defaultNamespace(self):
@@ -350,7 +398,7 @@ class Iq(Stanza):
     def request(self):
         for e in self.xml.getchildren():
             if e.tag != STANZA_ERROR_TAG:
-                return e
+                return ElementWrapper(e)
         return None
     query = request
 
@@ -411,7 +459,7 @@ class Presence(Stanza):
 
     @property
     def type(self):
-        t = self._getAttr("type")
+        t = self.get("type")
         return t if t else Presence.TYPE_AVAILABLE
 
     @type.setter
@@ -420,7 +468,7 @@ class Presence(Stanza):
             if "type" in self.xml.attrib:
                 del self.xml.attrib["type"]
         else:
-            self._setAttr("type", t)
+            self.set("type", t)
 
     @property
     def priority(self):
@@ -481,7 +529,7 @@ class Message(Stanza):
 
     @property
     def type(self):
-        t = self._getAttr("type")
+        t = self.get("type")
         return t if t else Message.TYPE_NORMAL
 
     @type.setter
@@ -490,7 +538,7 @@ class Message(Stanza):
             if "type" in self.xml.attrib:
                 del self.xml.attrib["type"]
         else:
-            self._setAttr("type", t)
+            self.set("type", t)
 
     @property
     def subject(self):
