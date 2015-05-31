@@ -69,7 +69,8 @@ class File:
             num_bytes = len(bytes_)
             self._data_size += num_bytes
             if self._maxsize and self._data_size > self._maxsize:
-                raise OverflowError("Data size exceeded")
+                raise OverflowError("File exceeds size limit of {:d} bytes."
+                                    .format(self._maxsize))
         except:
             self.close(False)
             raise
@@ -315,7 +316,7 @@ def ibbSendFile(stream, to_jid, file_path, sid, block_size=BLOCK_SIZE,
 
 @asyncio.coroutine
 def ibbReceiveFile(stream, request, file_info, maxsize=None, tempdir=None,
-                timeout=None):
+                   timeout=None):
 
 
     open_elem = request.getChild("open", IBB_NS_URI)
@@ -363,7 +364,16 @@ def ibbReceiveFile(stream, request, file_info, maxsize=None, tempdir=None,
             done = True
         else:
             data = iq.getChild("data", IBB_NS_URI)
-            ft_file.addBlock(data)
+            try:
+                ft_file.addBlock(data)
+            except (ValueError, OverflowError) as ex:
+                m = str(ex)
+                if isinstance(ex, OverflowError):
+                    xmpp_error = PolicyViolationStanzaError(m)
+                else:
+                    xmpp_error = BadRequestStanzaError(m)
+                stream.send(iq.errorResponse(xmpp_error))
+                raise FileTranserError(m)
 
         response = iq.resultResponse(clear=True)
         stream.send(response)
