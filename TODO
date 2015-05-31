@@ -2,12 +2,9 @@ TODO
 ----
 - make raise_on_error deafult to True
 - tests resolveHostPort caching
+- Iq request  -> query., maybe get fancier
 
 Botch (FREEZE):
-    x admins commands
-      x config save
-      x acl add
-      x acl remove
     - avatar plugin
       - Don't always upload
       - Commands:
@@ -18,13 +15,15 @@ Botch (FREEZE):
     - MUC plugin
       - muc commands
         - say
-        - join [room] (follow by default)
+        - join [room] (follow by default) / or handle invites
     - Muc link trigger
       - Search
     ~ Files command
+      - quick disable mechanism for plugins.
       - list
-      ~ Handle downloads
-      ~ Handle uploads
+      x Handle downloads
+      x Handle uploads
+        x Bug in pending 
     - Command API
       - Extract fuction's __doc__ for help listing
     - Help system
@@ -32,6 +31,7 @@ Botch (FREEZE):
       - help commands - Full listing with brief (first sentence of __doc__) text
     - Config-less startup
       - ~/.botch/config.ini (default)
+    - General disable mechanism for plugins.
 
 - Important
    - Descriptors instead of property for ElementWrapper _*etAttr and
