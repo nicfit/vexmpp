@@ -40,9 +40,7 @@ class IqVersionMixin(Mixin):
     def onStanza(self, stream, stanza):
         log.debug("jabber:iq:version received")
 
-        result = Iq(xml=stanza.xml)
-        result.swapToFrom()
-        result.type = "result"
+        result = stanza.resultResponse()
 
         elem = etree.Element("name")
         elem.text = self._name
