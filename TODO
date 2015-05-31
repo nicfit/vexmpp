@@ -1,0 +1,67 @@
+TODO
+----
+- make raise_on_error deafult to True
+- tests resolveHostPort caching
+
+Botch (FREEZE):
+    x admins commands
+      x config save
+      x acl add
+      x acl remove
+    - avatar plugin
+      - Don't always upload
+      - Commands:
+        - ls
+        - set <file>
+        - set <url>
+        - rotate
+    - MUC plugin
+      - muc commands
+        - say
+        - join [room] (follow by default)
+    - Muc link trigger
+      - Search
+    ~ Files command
+      - list
+      ~ Handle downloads
+      ~ Handle uploads
+    - Command API
+      - Extract fuction's __doc__ for help listing
+    - Help system
+      - help - Basic info, how to learn more, all commands
+      - help commands - Full listing with brief (first sentence of __doc__) text
+    - Config-less startup
+      - ~/.botch/config.ini (default)
+
+- Important
+   - Descriptors instead of property for ElementWrapper _*etAttr and
+     _*etChildText
+   - Respond to disco#info
+       - Disco support... particularly when a mixin is constructed and added to 
+         a stream the streams DiscoMixin/map should be updated to reflect that
+         the new mixin is suported (jabber:iq:version, etc.)
+   - Respond to version
+   - Respond to ping
+   - Remove callback methods that are not async (connectionFailed is the
+     same as the exceptions raised by ClientStream.connect, e.g.). Rethink...
+     use asyncio.Event???
+   - Application signal handers, might help cancelling pending tasks (cleanup)
+   - SSL Context options, lock down, cert vaildation, etc.
+   - vcard img hashes in presence, http://www.xmpp.org/extensions/xep-0153.html
+
+- Useful
+   - time out Stream stanza queue entries
+   - Allow "by" attributes on stanza errors.
+   ~ bind errors
+   - jabber:iq:register via stream:feature (also legacy, which is currently
+     implemented)
+
+- Meh
+   - jabber:iq:auth via stream:feature (not legacy)
+   - Ability to do TLS with immediate handshake (443, 5223, etc.)
+          
+
+Public Servers
+---------------
+   - jabber.iitsp.com - Openfire  (web registration)
+   - lightwitch.org - Metronome   (web registration)

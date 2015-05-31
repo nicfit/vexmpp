@@ -1,0 +1,9 @@
+wheel
+nose
+tox
+Sphinx
+# FIXME: not available for python3?
+#sphinxcontrib-bitbucket
+flake8
+coverage
+ipdb
