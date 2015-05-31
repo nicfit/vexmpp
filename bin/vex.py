@@ -102,7 +102,7 @@ def main(app):
     try:
         reg_cb = _register if args.register else None
         stream = yield from ClientStream.connect(Credentials(jid, password),
-                                                 host=jid.host, port=args.port,
+                                                 host=args.host, port=args.port,
                                                  state_callbacks=Callbacks(),
                                                  tls_opt=tls_opt,
                                                  mixins=mixins,
