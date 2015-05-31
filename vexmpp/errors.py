@@ -229,7 +229,8 @@ for _cond, _type, _txt, _lang in STANZA_ERRORS:
         self.type = type or self.__class__.type
         self.text = text or self.__class__.text
         self.lang = lang or self.__class__.lang
-        self.app_err = app_err or self.__class__.app_err
+        self.app_err = (app_err if app_err is not None
+                                else self.__class__.app_err)
 
     _global_dict[_name] = type(_name, (StanzaError,),
                                {"cond": _cond,
@@ -304,8 +305,10 @@ def _makeConcreteError(xml):
         else:
             app_err = child
 
-    if cond is None:
-        raise ValueError("No error condition in xml")
+    if cond is None and app_err is not None:
+        # Not properly namespacing the condition is common
+        cond = app_err
+        cond.tag = "{%s}%s" % (error_ns, cond.tag)
 
     if stream_error:
         cond = cond.tag[2 + len(STREAM_ERROR_NS_URI):]
