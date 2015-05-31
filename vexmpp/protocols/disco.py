@@ -5,8 +5,9 @@ from collections import UserDict
 
 from .. import stream
 from ..jid import Jid
-from ..stanzas import Iq
+from ..stanzas import Iq, ElementWrapper
 from ..errors import XmppError
+from ..utils import xpathFilter
 
 '''XEP 30'''
 
@@ -29,7 +30,7 @@ def getInfo(stream, to, node=None, timeout=None):
 def getItems(stream, to, node=None, timeout=None):
     iq = Iq(to=to, request=("query", NS_URI_ITEMS), id_prefix="disco#items_get")
     if node:
-        iq._setAttr("node", node)
+        iq.set("node", node)
 
     iq = yield from stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
     return iq
@@ -137,3 +138,29 @@ class DiscoCacheMixin(stream.Mixin):
 
         self._cache.cache[jid] = disco_info
         return disco_info
+
+
+class DiscoInfoMixin(stream.Mixin):
+    def __init__(self):
+        self._features = []
+        super().__init__([('disco_info_features', self._features)])
+
+    @xpathFilter([("/iq[@type='get']/ns:query", {"ns": NS_URI_INFO}),
+                  ("/iq[@type='get']/ns:query", {"ns": NS_URI_ITEMS})])
+    @asyncio.coroutine
+    def onStanza(self, stream, stanza):
+        log.debug("disco#info request")
+        if stanza.query.tag.startwith("{%s}" % NS_URI_INFO):
+            # disco#info
+            query = ElementWrapper(stanza.query)
+
+            ident = query.appendChild("identity")
+            ident.set("category", "client")
+            ident.set("name", "Botch")
+            ident.set("type", "bot")
+            _ = query.appendChild("feature").set("var", NS_URI_INFO)
+        else:
+            # disco#items
+            pass
+
+        stream.send(stanza.resultResponse())

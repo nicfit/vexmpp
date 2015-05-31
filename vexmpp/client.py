@@ -194,6 +194,7 @@ class ClientStream(Stream):
     @staticmethod
     def createDefaultMixins():
         return [
+                disco.DiscoInfoMixin(),
                 iqroster.RosterMixin(),
                 iqversion.IqVersionMixin(),
                 entity_time.EntityTimeMixin(),
