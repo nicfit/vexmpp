@@ -5,6 +5,7 @@ import asyncio
 import logging
 log = logging.getLogger(__name__)
 
+from functools import partial
 from collections import deque
 
 from lxml import etree
@@ -153,7 +154,8 @@ class Stream(asyncio.Protocol):
 
         if stanza:
             for m in self._mixins:
-                m.onSend(self, stanza)
+                hook = partial(m.onSend, self, stanza)
+                asyncio.async(self._runMixin(hook))
 
     @asyncio.coroutine
     def sendAndWaitIq(self, child_ns, to=None, child_name="query", type="get",
@@ -245,15 +247,9 @@ class Stream(asyncio.Protocol):
             self._transport.close()
             return
 
-        @asyncio.coroutine
-        def _runMixin(_stream, _m, _stanza):
-            try:
-                yield from _m.onStanza(_stream, _stanza)
-            except:
-                log.exception("{} mixin error".format(_m.__class__.__name__))
-
         for m in self._mixins:
-            asyncio.async(_runMixin(self, m, stanza))
+            hook = partial(m.onStanza, self, stanza)
+            asyncio.async(self._runMixin(hook))
 
         self._stanza_queue.append(QueuedStanza(stanza))
 
@@ -289,6 +285,13 @@ class Stream(asyncio.Protocol):
             t = int(t)
         self._default_timeout = t
 
+    @asyncio.coroutine
+    def _runMixin(self, functor):
+        try:
+            yield from functor()
+        except:
+            log.exception("{} mixin error".format(_m.__class__.__name__))
+
 
 class Mixin(object):
     def __init__(self, export_tuples=None):
@@ -313,6 +316,7 @@ class Mixin(object):
         '''
         pass
 
+    @asyncio.coroutine
     def onSend(self, stream, stanza):
         '''Called for each outgoing stanza.'''
         pass
