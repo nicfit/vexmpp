@@ -50,9 +50,9 @@ class AvatarPlugin(Plugin):
                                       timeout=bot.default_timeout)
 
 
-            vc = iq.xml.find("{%s}%s" % (vcard.NS_URI, "vCard"))
+            vc = iq.find("{%s}%s" % (vcard.NS_URI, "vCard"))
             if vc is not None:
-                iq.xml.remove(vc)
+                iq.remove(vc)
 
                 photo = vc.find("{%s}%s" % (vcard.NS_URI, "PHOTO"))
                 if photo is not None:
