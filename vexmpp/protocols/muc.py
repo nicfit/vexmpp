@@ -166,9 +166,9 @@ def enterRoom(stream, room, service, nick, password=None,
 
     pres = Presence(to=nick_jid)
 
-    x = etree.SubElement(pres.xml, "{%s}x" % NS_URI, nsmap={None: NS_URI})
+    x = pres.appendChild("x", NS_URI)
     if password:
-        pw = etree.SubElement(x, "password")
+        pw = x.appendChild("password")
         pw.text = password
 
     stream.send(pres)
@@ -194,8 +194,7 @@ def enterRoom(stream, room, service, nick, password=None,
         if config_new_room_callback is None:
             # New instant room, accept the default config
             iq = Iq(to=room_jid, type="set", request=("query", NS_URI_OWNER))
-            x = etree.SubElement(iq.query, "{jabber:x:data}x",
-                                 nsmap={None: "jabber:x:data"})
+            x = iq.query.appendChild("x", "jabber:x:data")
             x.attrib["type"] = "submit"
             yield from stream.sendAndWait(iq, raise_on_error=True,
                                           timeout=timeout)
