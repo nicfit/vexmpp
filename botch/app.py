@@ -172,6 +172,8 @@ class Botch(Application):
             for done_task in asyncio.as_completed(tasks):
                 try:
                     result = yield from done_task
+                except configparser.Error as ex:
+                    self.log.error("Configuration error: {}".format(ex))
                 except asyncio.CancelledError:
                     return self._exit_status
                 except Exception as ex:
