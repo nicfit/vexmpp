@@ -9,7 +9,9 @@ readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 requirements = [
-    # TODO: put package requirements here
+    "lxml",
+    "PyOpenSSL",
+    "aiodns",
 ]
 
 def find_packages(path, src):
@@ -25,7 +27,6 @@ def find_packages(path, src):
 test_requirements = [
     # TODO: put package test requirements here
 ]
-print("PKGS:", find_packages('.','vexmpp'))
 
 setup(
     name='vexmpp',
