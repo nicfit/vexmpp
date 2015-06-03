@@ -30,7 +30,7 @@ MAX_SEQ = 65535
 BLOCK_SIZE = 4096
 
 
-class FileTranserError(Exception):
+class FileTransferError(Exception):
     pass
 
 
@@ -173,7 +173,7 @@ def receiveFile(stream, si_request, maxsize=None, tempdir=None, timeout=None):
                                     app_err=no_valid_streams_error)
     except XmppError as err:
         stream.send(si_request.errorResponse(err))
-        raise FileTranserError(str(err))
+        raise FileTransferError(str(err))
 
     # TODO: check and prefer bytesstream here.
     selected_meth = IBB_NS_URI
@@ -259,7 +259,7 @@ def sendFile(stream, to_jid, filename, description=None, timeout=None):
                 "Only in-band-bytestreams is supported",
                 app_err=etree.Element("no-valid-streams",
                                       nsmap={None: SI_NS_URI}))))
-        raise FileTranserError("No supported stream methods.")
+        raise FileTransferError("No supported stream methods.")
 
     # TODO: check and prefer bytesstream here.
     selected_meth = IBB_NS_URI
@@ -276,7 +276,7 @@ def sendFile(stream, to_jid, filename, description=None, timeout=None):
         yield from sendFileCoro(stream, to_jid, path, sid, timeout=timeout)
 
     except XmppError as ex:
-        raise FileTranserError(ex)
+        raise FileTransferError(ex)
 
 
 ### IBB ###
@@ -373,7 +373,7 @@ def ibbReceiveFile(stream, request, file_info, maxsize=None, tempdir=None,
                 else:
                     xmpp_error = BadRequestStanzaError(m)
                 stream.send(iq.errorResponse(xmpp_error))
-                raise FileTranserError(m)
+                raise FileTransferError(m)
 
         response = iq.resultResponse(clear=True)
         stream.send(response)
