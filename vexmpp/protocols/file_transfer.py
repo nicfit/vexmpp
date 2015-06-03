@@ -249,8 +249,12 @@ def sendFile(stream, to_jid, filename, description=None, timeout=None):
     feat.append(form)
 
     # Initiate stream
-    response = yield from stream.sendAndWait(request, timeout=timeout,
-                                             raise_on_error=True)
+    try:
+        response = yield from stream.sendAndWait(request, timeout=timeout,
+                                                 raise_on_error=True)
+    except XmppError as ex:
+        raise FileTransferError(ex)
+
     si_elem = response.find("./si:si", namespaces={"si": SI_NS_URI})
     methods = si_elem.xpath(".//x:field/x:value/text()",
                             namespaces={"x": xdata.NS_URI})
