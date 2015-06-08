@@ -62,7 +62,7 @@ class ArgumentParser(argparse.ArgumentParser):
 
     def __init__(self, add_logging_opts=True,
                  config_opts=ConfigOpt.none, config_required=False,
-                 sample_config=None, config_class=None, config_args=None,
+                 sample_config=None, config_class=None,
                  default_config_file=None,
                  add_debug_opts=True,
                  **kwargs):
@@ -93,7 +93,6 @@ class ArgumentParser(argparse.ArgumentParser):
                      "latter case.")
 
         self._ConfigParser = config_class or ConfigParser
-        self._config_args = config_args or tuple([])
 
         if config_opts != self.ConfigOpt.none:
             group = self.add_argument_group("Configuration options")
@@ -142,7 +141,10 @@ class ArgumentParser(argparse.ArgumentParser):
             # Stash the full known path
             args.config_file = cfg_file
 
-            cfg_parser = self._ConfigParser(*self._config_args)
+            # This combo of args will cause comments to be preserves when
+            # writing.
+            cfg_parser = self._ConfigParser(allow_no_value=True,
+                                            comment_prefixes=None)
 
             try:
                 read_files = cfg_parser.read([cfg_file])
