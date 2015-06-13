@@ -9,10 +9,10 @@ __author__ = 'Travis Shirk'
 __email__ = 'travis@pobox.com'
 __web__ = 'http://FIXME'
 
-__version__ = '0.4.0'
+__version__ = '0.2.0'
 __version_info__ = tuple((int(v) for v in __version__.split('.')))
 __release__ = 'alpha'
-__years__ = '2014'
+__years__ = '2013-2015'
 
 __version_txt__ = """
 %(__projectname__)s %(__version__)s-%(__release__)s (C) Copyright %(__author__)s

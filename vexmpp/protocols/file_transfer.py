@@ -43,9 +43,9 @@ class File:
         self._md5sum = md5()
         self._maxsize = maxsize
 
-        self._tmp_dir = tempdir
+        self._tmp_dir = Path(tempdir).resolve()
         (self._tmp_fd,
-         self._tmp_name) = mkstemp(suffix=".incoming", dir=self._tmp_dir)
+         self._tmp_name) = mkstemp(suffix=".incoming", dir=str(self._tmp_dir))
         log.debug("Opened tmp file {}".format(self._tmp_name))
 
     def addBlock(self, data):
