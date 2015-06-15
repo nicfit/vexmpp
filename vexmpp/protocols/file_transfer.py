@@ -24,6 +24,7 @@ IBB_NS_URI = "http://jabber.org/protocol/ibb"
 BYTESTREAMS_NS_URI = "http://jabber.org/protocol/bytestreams"
 
 RangeTuple = namedtuple("RangeTuple", "offset, length")
+# FIXME: Collapse into File class. Lazy open temp file
 FileInfo = namedtuple("FileInfo", "name, size, desc, date, md5, range, sid")
 
 MAX_SEQ = 65535
@@ -92,20 +93,21 @@ class File:
             # Missing sequences
             full_set = set(range(sequences[-1] + 1))
             if full_set.difference(self._seq_set):
-                raise ValueError("Not all data blocks received, missing "
-                                 "sequences {}".format(
-                                     full_set.difference(self._seq_set)))
+                raise FileTransferError("Not all data blocks received, missing "
+                                        "sequences {}".format(
+                                        full_set.difference(self._seq_set)))
 
         if self._data_size != self.info.size:
-            raise ValueError("Not all bytes received, read {:d} bytes but "
-                             "expected {:d}".format(self._data_size,
-                                                    self.info.size))
+            raise FileTransferError("Not all bytes received, read {:d} bytes "
+                                    "but expected {:d}".format(self._data_size,
+                                                               self.info.size))
 
         if self.info.md5:
             md5 = self.md5
             if self.info.md5.lower() != md5:
-                raise ValueError("File hash mismatch, computed {} but "
-                                 "expected {}".format(md5, self.info.md5))
+                raise FileTransferError("File hash mismatch, computed {} but "
+                                        "expected {}".format(md5,
+                                                             self.info.md5))
 
     def close(self, success):
         close_err = None
