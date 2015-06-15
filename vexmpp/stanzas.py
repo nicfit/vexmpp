@@ -167,7 +167,9 @@ class ElementWrapper:
     def appendChild(self, name, ns=None):
         if not ns:
             nsmap = self.xml.nsmap
-            ns = nsmap[None]
+            # None represents the unprefixed default namespace. Top-level stanza
+            # types don't have this.
+            ns = nsmap[None] if None in nsmap else None
         else:
             nsmap = {None: ns}
 
