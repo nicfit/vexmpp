@@ -220,3 +220,13 @@ def kick(stream, nick_jid, reason, timeout=None):
     query.appendChild("reason").text = reason
 
     _ = yield from stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
+
+@asyncio.coroutine
+def leaveRoom(stream, nick_jid, leave_msg=None, timeout=None):
+    pres = Presence(to=nick_jid, type=Presence.TYPE_UNAVAILABLE)
+    if leave_msg:
+        pres.appendChild("status").text = leave_msg
+
+    stream.send(pres)
+    pres = yield from stream.wait(selfPresenceXpath(nick_jid))
+    return pres
