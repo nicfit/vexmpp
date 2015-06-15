@@ -195,6 +195,9 @@ class Stream(asyncio.Protocol):
         if not isinstance(xpaths, list):
             xpaths = [xpaths]
 
+        if timeout is None and self.default_timeout:
+            timeout = self.default_timeout
+
         log.debug("Stream wait for %s [timeout=%s]" % (xpaths, timeout))
         if _ENFORCE_TIMEOUTS and not timeout:
             raise RuntimeError("Timeout not set error")
