@@ -158,6 +158,9 @@ class ElementWrapper:
     def clear(self):
         return self.xml.clear()
 
+    def getchildren(self):
+        return self.xml.getchildren()
+
     ##### etree Element interface end #####
 
     @staticmethod
