@@ -1,6 +1,6 @@
 .PHONY: clean-pyc clean-build clean-patch docs clean help lint test test-all \
         coverage docs release dist tags
-SRC_DIRS = vexmpp tests bin botch
+SRC_DIRS = vexmpp tests bin
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
 try:
