@@ -3,7 +3,7 @@ import asyncio
 import platform
 from lxml import etree
 
-from .. import __projectname__, __version__
+from .. import __project_name__, __version__
 from ..stanzas import Iq
 from ..stream import Mixin
 from ..utils import xpathFilter
@@ -27,7 +27,7 @@ def get(stream, to, timeout=None):
 class IqVersionMixin(Mixin):
     '''A stream mixin for handling version IQ 'get' requests.'''
 
-    def __init__(self, name=__projectname__, version=__version__,
+    def __init__(self, name=__project_name__, version=__version__,
                  show_platform=True):
         super().__init__()
 

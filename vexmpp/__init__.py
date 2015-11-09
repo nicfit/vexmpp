@@ -2,11 +2,12 @@
 from collections import namedtuple
 
 
-__name__ = 'vexmpp'
+__project_name__ = 'vexmpp'
+__project_slug__ = 'vexmpp'
 __author__ = 'Travis Shirk'
 __author_email__ = 'travis@pobox.com'
 __url__ = 'http://example.com/...'
-__description__ = 'XMPP for Python'
+__description__ = 'Asyncio XMPP'
 
 __version__ = '0.1.0-alpha'
 __release__ = __version__.split('-')[1] if '-' in __version__ else "final"

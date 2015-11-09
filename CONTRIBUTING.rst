@@ -30,15 +30,15 @@ is open to whoever wants to implement it.
 Implement Features
 ~~~~~~~~~~~~~~~~~~
 
-Look through the BitBucket issues for features. Anything tagged with "feature"
-is open to whoever wants to implement it.
+Look through the BitBucket issues for features. Anything tagged with
+"feature" is open to whoever wants to implement it.
 
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-vexmpp could always use more documentation, whether as part of the
-official vexmpp docs, in docstrings, or even on the web in blog posts,
-articles, and such.
+vexmpp could always use more documentation, whether as
+part of the official vexmpp docs, in docstrings, or
+even on the web in blog posts, articles, and such.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
@@ -78,7 +78,8 @@ Ready to contribute? Here's how to set up `vexmpp` for local development.
 
    Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox::
+5. When you're done making changes, check that your changes pass flake8 and the
+   tests, including testing other Python versions with tox::
 
     $ flake8 vexmpp tests
     $ python setup.py test
