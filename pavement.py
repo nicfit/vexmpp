@@ -6,12 +6,13 @@ from paver.path import path
 
 
 def _setup(args, capture=False):
-    return sh("python setup.py %s" % args, capture=capture)
+    return sh("python setup.py %s 2> /dev/null" % args, capture=capture)
 
 
 NAME, VERSION, AUTHOR, *_ = _setup("--name --version --author",
                                    capture=True).split('\n')
 FULL_NAME = '-'.join([NAME, VERSION])
+SRC_DIRS = ["vexmpp", "tests", "bin"]
 
 options(
     test=Bunch(
@@ -19,6 +20,12 @@ options(
         coverage=False,
     ),
 )
+
+## -- misc tasks -- ##
+
+@task
+def lint():
+    sh('flake8 {}'.format(" ".join(SRC_DIRS)))
 
 
 ## -- test tasks -- ##

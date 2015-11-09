@@ -25,13 +25,15 @@ def getPackageInfo():
     info_dict = {}
     info_keys = ["version", "name", "author", "author_email", "url", "license",
                  "description"]
+    key_remap = {"name": "project_name"}
 
     base = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(base, "vexmpp/__init__.py")) as infof:
         for line in infof:
             for what in info_keys:
                 rex = re.compile(r"__{what}__\s*=\s*['\"](.*?)['\"]"
-                                  .format(what=what))
+                                  .format(what=what if what not in key_remap
+                                                    else key_remap[what]))
 
                 m = rex.match(line.strip())
                 if not m:

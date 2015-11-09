@@ -6,10 +6,10 @@ __project_name__ = 'vexmpp'
 __project_slug__ = 'vexmpp'
 __author__ = 'Travis Shirk'
 __author_email__ = 'travis@pobox.com'
-__url__ = 'http://example.com/...'
+__url__ = 'https://bitbucket.org/nicfit/vexmpp'
 __description__ = 'Asyncio XMPP'
 
-__version__ = '0.1.0-alpha'
+__version__ = '0.4.0-alpha'
 __release__ = __version__.split('-')[1] if '-' in __version__ else "final"
 __version_info__   = \
     namedtuple("Version", "major, minor, maint, release")(
@@ -27,7 +27,6 @@ Run with --help/-h for usage information or read the docs at
 """ % (locals())
 
 from . import log                                                        # noqa
-
 from .jid import Jid                                                     # noqa
 from . import stanzas                                                    # noqa
 from . import client                                                     # noqa
