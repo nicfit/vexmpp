@@ -1,6 +1,17 @@
 .PHONY: clean-pyc clean-build clean-patch docs clean help lint test test-all \
-        coverage docs release dist maintainer-clean tags
+        coverage docs release dist tags
 SRC_DIRS = vexmpp tests bin botch
+define BROWSER_PYSCRIPT
+import os, webbrowser, sys
+try:
+	from urllib import pathname2url
+except:
+	from urllib.request import pathname2url
+
+webbrowser.open("file://" + pathname2url(os.path.abspath(sys.argv[1])))
+endef
+export BROWSER_PYSCRIPT
+BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 help:
 	@echo "clean - remove all build, test, coverage and Python artifacts"
@@ -15,15 +26,17 @@ help:
 	@echo "docs - generate Sphinx HTML documentation, including API docs"
 	@echo "release - package and upload a release"
 	@echo "dist - package"
+	@echo "install - install the package to the active Python's site-packages"
 
 clean: clean-build clean-pyc clean-test clean-patch
-	rm -fr htmlcov/
 	rm -rf tags
 
 clean-build:
 	rm -fr build/
 	rm -fr dist/
-	rm -fr *.egg-info
+	rm -fr .eggs/
+	find . -name '*.egg-info' -exec rm -fr {} +
+	find . -name '*.egg' -exec rm -f {} +
 
 clean-pyc:
 	find . -name '*.pyc' -exec rm -f {} +
@@ -34,7 +47,6 @@ clean-pyc:
 clean-test:
 	rm -fr .tox/
 	rm -f .coverage
-	rm -fr htmlcov/
 
 clean-patch:
 	find . -name '*.rej' -exec rm -f '{}' \;
@@ -43,17 +55,25 @@ clean-patch:
 lint:
 	flake8 ${SRC_DIRS}
 
+
+_NOSE_OPTS=--verbosity=1 --detailed-errors
+ifdef TEST_PDB
+    _PDB_OPTS=--pdb --pdb-failures -s
+endif
 test:
-	nosetests
+	nosetests $(_NOSE_OPTS) $(_PDB_OPTS)
 
 test-all:
 	tox
 
+_COVERAGE_BUILD_D=build/tests/coverage
 coverage:
-	coverage run --source vexmpp setup.py test
-	coverage report -m
-	coverage html
-	@echo "file://`pwd`/htmlcov/index.html"
+	nosetests $(_NOSE_OPTS) $(_PDB_OPTS) --with-coverage \
+	          --cover-erase --cover-tests --cover-inclusive \
+		  --cover-package=vexmpp \
+		  --cover-branches --cover-html \
+		  --cover-html-dir=$(_COVERAGE_BUILD_D) tests
+	$(BROWSER) $(_COVERAGE_BUILD_D)/index.html
 
 docs:
 	rm -f docs/vexmpp.rst
@@ -61,7 +81,10 @@ docs:
 	sphinx-apidoc -o docs/ vexmpp
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
-	@echo "file://`pwd`/docs/_build/html/index.html"
+	$(BROWSER) docs/_build/html/index.html
+
+servedocs: docs
+	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 release: clean
 	python setup.py sdist upload
@@ -72,7 +95,8 @@ dist: clean
 	python setup.py bdist_wheel
 	ls -l dist
 
+install: clean
+	python setup.py install
+
 tags:
 	ctags -R ${SRC_DIRS}
-
-maintainer-clean: clean

@@ -1,56 +1,73 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+import re
+from setuptools import setup, find_packages
 
-from setuptools import setup
 
-
-readme = open('README.rst').read()
-history = open('HISTORY.rst').read().replace('.. :changelog:', '')
-
-requirements = [
-    "lxml",
-    "PyOpenSSL",
-    "aiodns",
+classifiers = [
+    'Development Status :: 2 - Pre-Alpha',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: GPL License',
+    'Operating System :: POSIX',
+    'Natural Language :: English',
+    'Programming Language :: Python',
+    "Programming Language :: Python :: 2",
+    'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.3',
+    'Programming Language :: Python :: 3.4',
+    'Programming Language :: Python :: 3.5',
 ]
 
-def find_packages(path, src):
-    packages = []
-    for pkg in [src]:
-        for _dir, subdirectories, files in (
-                os.walk(os.path.join(path, pkg))):
-            if '__init__.py' in files:
-                tokens = _dir.split(os.sep)[len(path.split(os.sep)):]
-                packages.append(".".join(tokens))
-    return packages
 
-test_requirements = [
-    # TODO: put package test requirements here
-]
+def getPackageInfo():
+    info_dict = {}
+    info_keys = ["version", "name", "author", "author_email", "url", "license",
+                 "description"]
 
-setup(
-    name='vexmpp',
-    version='0.4.0',
-    description='Annoying XMPP for Python 3',
-    long_description=readme + '\n\n' + history,
-    author='Travis Shirk',
-    author_email='travis@pobox.com',
-    url='https://bitbucket.org/nicfit/vexmpp',
-    packages=find_packages('.','vexmpp'),
-    package_dir={'vexmpp':
-                 'vexmpp'},
-    include_package_data=True,
-    install_requires=requirements,
-    license="GPL",
-    zip_safe=False,
-    keywords='vexmpp',
-    classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: GPL License',
-        'Natural Language :: English',
-        'Programming Language :: Python :: 3.4',
-    ],
-    test_suite='nose.collector',
-    tests_require=test_requirements
+    base = os.path.abspath(os.path.dirname(__file__))
+    with open(os.path.join(base, "vexmpp/__init__.py")) as infof:
+        for line in infof:
+            for what in info_keys:
+                rex = re.compile(r"__{what}__\s*=\s*['\"](.*?)['\"]"
+                                  .format(what=what))
+
+                m = rex.match(line.strip())
+                if not m:
+                    continue
+                info_dict[what] = m.groups()[0]
+
+    return info_dict
+
+
+with open('README.rst') as readme_file:
+    readme = readme_file.read()
+
+with open('HISTORY.rst') as history_file:
+    history = history_file.read().replace('.. :changelog:', '')
+
+def requirements(filename):
+    return open('requirements/' + filename).read().splitlines()
+
+
+pkg_info = getPackageInfo()
+
+src_dist_tgz = "{name}-{version}.tar.gz".format(**pkg_info)
+pkg_info["download_url"] = "{}/releases/{}".format(pkg_info["url"],
+                                                   src_dist_tgz)
+
+setup(classifiers=classifiers,
+      package_dir={'vexmpp': 'vexmpp'},
+      packages=find_packages('.','vexmpp'),
+      zip_safe=False,
+      platforms=["Any",],
+      keywords=['vexmpp'],
+      include_package_data=True,
+      install_requires=requirements("default.txt"),
+      tests_require=requirements("test.txt"),
+      test_suite='tests',
+      long_description=readme + '\n\n' + history,
+      package_data={},
+      **pkg_info
 )
