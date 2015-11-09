@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import asyncio
-
 import logging
-log = logging.getLogger(__name__)
 
 from functools import partial
 from collections import deque
@@ -15,6 +13,9 @@ from .stanzas import Iq
 from .parser import Parser
 from .utils import signalEvent
 from .utils import benchmark as timedWait
+
+from .log import getLogger
+log = getLogger(__name__)
 
 
 if "VEX_TIMED_WAITS" in os.environ and int(os.environ["VEX_TIMED_WAITS"]):
@@ -293,7 +294,7 @@ class Stream(asyncio.Protocol):
         try:
             yield from functor()
         except:
-            log.exception("{} mixin error".format(_m.__class__.__name__))
+            log.exception("{} mixin error".format(functor.__class__.__name__))
 
 
 class Mixin(object):

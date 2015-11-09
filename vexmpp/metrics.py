@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import math
-import logging
 from collections import OrderedDict
 
-log = logging.getLogger(__name__)
+from .log import getLogger
+log = getLogger(__name__)
 
 
 class BaseMetric:

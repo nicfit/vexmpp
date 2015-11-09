@@ -3,6 +3,8 @@
 import os
 import sys
 import asyncio
+import logging.config
+from io import StringIO
 from getpass import getpass
 
 import aiodns
@@ -25,6 +27,7 @@ from vexmpp.client import (Credentials, DEFAULT_C2S_PORT, ClientStream,
 from vexmpp.stanzas import Presence
 from vexmpp.protocols import iqversion, stream_mgmt, iqregister
 from vexmpp.utils import ArgumentParser
+from vexmpp import log
 
 
 def _outputXml(stanza):
@@ -71,7 +74,6 @@ def _register(creds, reg_query):
 
             print("{}: ".format(field.get("label") or field.get("var")),
                     end="")
-            #import ipdb; ipdb.set_trace()
             raise NotImplementedError()
     else:
         username = reg_query.find("{%s}username" % iqregister.NS_URI)
@@ -188,6 +190,9 @@ optgroup.add_argument("--tls", action="store",
                       help="TLS setting, 'on' by default.")
 optgroup.add_argument("--stream-mgmt", action="store_true", default=False,
                       help="Enable stream management (XEP 198).")
+
+log.addCommandLineArgs(arg_parser)
+logging.config.fileConfig(StringIO(log.DEFAULT_FILE_CONFIG))
 
 app = Application(main, argument_parser=arg_parser)
 sys.exit(app.run())

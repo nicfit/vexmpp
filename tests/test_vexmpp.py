@@ -27,17 +27,6 @@ class TestVexmpp(unittest.TestCase):
         assert(vexmpp.__license__)
         assert(vexmpp.__version_txt__)
 
-    def test_log(self):
-        from vexmpp.log import Logger
-
-        main_log = None
-        try:
-            main_log = getattr(vexmpp.log, "log")
-        except:
-            pass
-        assert(main_log is not None)
-        assert(isinstance(main_log, Logger))
-
     def tearDown(self):
         pass
 

@@ -8,8 +8,8 @@ from ..stanzas import Iq
 from ..stream import Mixin
 from ..utils import xpathFilter
 
-import logging
-log = logging.getLogger(__name__)
+from ..log import getLogger
+log = getLogger(__name__)
 
 
 NS_URI = "jabber:iq:version"

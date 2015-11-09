@@ -16,8 +16,8 @@ from .protocols import (resourcebind, iqroster, presence, iqversion,
 
 DEFAULT_C2S_PORT = 5222
 
-import logging
-log = logging.getLogger(__name__)
+from .log import getLogger
+log = getLogger(__name__)
 
 
 class TlsOpts(Enum):

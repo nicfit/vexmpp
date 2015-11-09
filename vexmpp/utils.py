@@ -14,9 +14,9 @@ from configparser import ConfigParser
 
 import aiodns
 
-from .log import LEVEL_NAMES, optLoggerFile, optLoggerLevel
+from .log import LEVEL_NAMES, getLogger
 
-log = logging.getLogger(__name__)
+log = getLogger(__name__)
 
 
 class benchmark(object):
@@ -60,7 +60,7 @@ class ArgumentParser(argparse.ArgumentParser):
         option = 1
         argument = 2
 
-    def __init__(self, add_logging_opts=True,
+    def __init__(self,
                  config_opts=ConfigOpt.none, config_required=False,
                  sample_config=None, config_class=None,
                  default_config_file=None,
@@ -69,28 +69,6 @@ class ArgumentParser(argparse.ArgumentParser):
 
         kwargs["add_help"] = True
         super().__init__(**kwargs)
-
-        if add_logging_opts:
-            group = self.add_argument_group("Logging options")
-            group.add_argument(
-                "-l", "--log-level", dest="log_levels",
-                action="append", metavar="LOGGER:LEVEL", default=[],
-                help="Set logging levels (the option may be specified multiple "
-                     "times). The level of a specific logger may be set with "
-                     "the syntax LOGGER:LEVEL, but LOGGER is optional so "
-                     "if only LEVEL is given it applies to the root logger. "
-                     "Valid level names are: %s" % ", ".join(LEVEL_NAMES))
-
-            group.add_argument(
-                "-L", "--log-file", dest="log_files",
-                action="append", metavar="LOGGER:FILE", default=[],
-                help="Set log files (the option may be specified multiple "
-                     "times). The level of a specific logger may be set with "
-                     "the syntax LOGGER:FILE, but LOGGER is optional so "
-                     "if only FILE is given it applies to the root logger. "
-                     "The special FILE values 'stdout', 'stderr', and 'null' "
-                     "result on logging to the console, or /dev/null in the "
-                     "latter case.")
 
         self._ConfigParser = config_class or ConfigParser
 
@@ -162,15 +140,6 @@ class ArgumentParser(argparse.ArgumentParser):
 
             args.config_obj = cfg_parser
 
-    def _handleLoggingOpts(self, args):
-        # Log level setting
-        for opt in args.log_levels:
-            optLoggerLevel(opt)
-
-        # Log file settings
-        for opt in args.log_files:
-            optLoggerFile(opt)
-
     def parse_args(self, args=None, namespace=None):
 
         # Print example config and exit, if requested. Done before actually
@@ -184,12 +153,6 @@ class ArgumentParser(argparse.ArgumentParser):
         # Handle config file option, parses and sets'parsed_args.config_obj'.
         # This call may not return.
         self._handleConfigFileOpts(parsed_args)
-
-        # Process log level opts last, they override any any config file.
-        try:
-            self._handleLoggingOpts(parsed_args)
-        except Exception as ex:
-            self.error("Logging option error: {}".format(ex))
 
         return parsed_args
 
