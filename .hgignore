@@ -1,8 +1,6 @@
 syntax: glob
 
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
 
 # C extensions
 *.so
