@@ -7,8 +7,8 @@ from ..stanzas import Iq
 from ..stream import Mixin
 from ..utils import xpathFilter
 
-import logging
-log = logging.getLogger(__name__)
+from ..log import getLogger
+log = getLogger(__name__)
 
 '''
 Protocol for XEP 0202 - Entity Time support.

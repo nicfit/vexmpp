@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import sys
 import asyncio
-import logging
-import logging.config
 from .utils import ArgumentParser
 
-log = logging.getLogger(__name__)
+from .log import getLogger
+log = getLogger(__name__)
 
 
 class Application(object):
@@ -16,7 +15,7 @@ class Application(object):
         self.event_loop = asyncio.get_event_loop()
         self._entry_point = user_func if user_func else self._main
         self._exit_status = 0
-        self.log = logging.getLogger(app_name) if app_name else log
+        self.log = getLogger(app_name) if app_name else log
         self.arg_parser = argument_parser or ArgumentParser(prog=app_name)
         self.args = None
 

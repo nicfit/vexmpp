@@ -9,8 +9,8 @@ from collections import namedtuple
 
 from lxml import etree
 
-import logging
-log = logging.getLogger(__name__)
+from ..log import getLogger
+log = getLogger(__name__)
 
 from ..errors import *
 from ..protocols import xdata

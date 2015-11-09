@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import asyncio
-import logging
 from collections import UserDict
 
 from .. import stream
@@ -11,7 +10,8 @@ from ..utils import xpathFilter
 
 '''XEP 30'''
 
-log = logging.getLogger(__name__)
+from ..log import getLogger
+log = getLogger(__name__)
 
 NS_URI_BASE  = "http://jabber.org/protocol/disco"
 NS_URI_INFO  = "{}#info".format(NS_URI_BASE)
@@ -150,7 +150,7 @@ class DiscoInfoMixin(stream.Mixin):
     @asyncio.coroutine
     def onStanza(self, stream, stanza):
         log.debug("disco#info request")
-        if stanza.query.tag.startwith("{%s}" % NS_URI_INFO):
+        if stanza.query.tag.startswith("{%s}" % NS_URI_INFO):
             # disco#info
             query = ElementWrapper(stanza.query)
 

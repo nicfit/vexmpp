@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import asyncio
-import logging
 from lxml import etree
 
 from .. import stream
@@ -13,7 +12,8 @@ Multi-user chat (aka XEP 45)
 http://xmpp.org/extensions/xep-0045.html
 '''
 
-log = logging.getLogger(__name__)
+from ..log import getLogger
+log = getLogger(__name__)
 
 NS_URI = "http://jabber.org/protocol/muc"
 JINC_NS_URI = "http://www.jabber.com/protocol/muc"

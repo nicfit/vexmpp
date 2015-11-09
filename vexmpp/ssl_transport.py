@@ -21,14 +21,15 @@ The transport implementation is documented below:
 
 import abc
 import asyncio
-import logging
 import socket
 
 from enum import Enum
 
 import OpenSSL.SSL
 
-logger = logging.getLogger(__name__)
+from .log import getLogger
+logger = getLogger(__name__)
+
 
 class _State(Enum):
     RAW_OPEN               = 0x0000

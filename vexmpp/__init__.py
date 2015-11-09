@@ -26,7 +26,4 @@ Run with --help/-h for usage information or read the docs at
 %(__url__)s
 """ % (locals())
 
-from . import log                                                        # noqa
-from .jid import Jid                                                     # noqa
-from . import stanzas                                                    # noqa
-from . import client                                                     # noqa
+from . import log

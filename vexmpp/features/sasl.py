@@ -74,6 +74,5 @@ def handle(stream, feature_elem, timeout=None):
             stream.send(auth)
 
 
-import logging
-log = logging.getLogger(__name__)
-del logging
+from ..log import getLogger
+log = getLogger(__name__)
