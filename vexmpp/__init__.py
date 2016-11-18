@@ -7,7 +7,7 @@ __project_slug__ = 'vexmpp'
 __author__ = 'Travis Shirk'
 __author_email__ = 'travis@pobox.com'
 __url__ = 'https://bitbucket.org/nicfit/vexmpp'
-__description__ = 'Asyncio XMPP'
+__description__ = 'XMPP for Python3'
 
 __version__ = '0.4.0-alpha'
 __release__ = __version__.split('-')[1] if '-' in __version__ else "final"
@@ -16,11 +16,11 @@ __version_info__   = \
         *(tuple((int(v) for v in __version__.split('-')[0].split('.'))) +
           tuple((__release__,))))
 
-__years__ = '2015'
+__years__ = "2010-2016"
 __license__ = 'GPL'
 
 __version_txt__ = """
-%(__name__)s %(__version__)s (C) Copyright %(__author__)s
+%(__name__)s %(__version__)s (C) Copyright %(__years__)s %(__author__)s
 This program comes with ABSOLUTELY NO WARRANTY! See LICENSE for details.
 Run with --help/-h for usage information or read the docs at
 %(__url__)s

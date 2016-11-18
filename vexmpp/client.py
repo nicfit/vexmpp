@@ -135,7 +135,7 @@ class ClientStream(Stream):
         (host,
          port) = yield from resolveHostPort(host if host else creds.jid.host,
                                             port, loop)
-        peer = (host, int(port))
+        peer = (host.host, int(port))
         log.verbose("Connecting %s..." % str(peer))
 
         state_callbacks = stream_kwargs["state_callbacks"] \

@@ -15,7 +15,7 @@ vexmpp
         :target: https://pypi.python.org/pypi/vexmpp
 
 
-Asyncio XMPP
+XMPP for Python3
 
 * Free software: GPL license
 * Documentation: https://vexmpp.readthedocs.org.

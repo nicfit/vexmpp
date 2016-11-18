@@ -138,3 +138,38 @@ def  _browser(file_path):
             from urllib.request import pathname2url
 
     webbrowser.open("file://" + pathname2url(os.path.abspath(file_path)))
+
+
+## -- cookiecutter -- ##
+@task
+def cookiecutter():
+    from cookiecutter.main import cookiecutter
+    cookiecutter("https://bitbucket.org/nicfit/cookiecutter-pypackage",
+                 extra_context={'_comment': '##### end #####',
+ 'asyncio': 'yes',
+ 'bitbucket_username': 'nicfit',
+ 'config_mod': 'yes',
+ 'email': 'travis@pobox.com',
+ 'full_name': 'Travis Shirk',
+ 'github_username': 'nicfit',
+ 'license': 'GPL',
+ 'log_mod': 'yes',
+ 'project_name': 'vexmpp',
+ 'project_short_description': 'XMPP for Python3',
+ 'project_slug': 'vexmpp',
+ 'py_module': 'vexmpp',
+ 'pypi_username': 'nicfit',
+ 'release_date': 'today',
+ 'support_python2': 'no',
+ 'support_python3': 'yes',
+ 'use_bitbucket': 'yes',
+ 'use_github': 'yes',
+ 'use_make': 'yes',
+ 'use_paver': 'yes',
+ 'use_pypi_deployment_with_travis': 'no',
+ 'version': '0.1.0-alpha',
+ 'web': 'https://bitbucket.org/nicfit/vexmpp',
+ 'year': '2010-2016'},
+                 output_dir="..", no_input=True, overwrite_if_exists=True)
+
+

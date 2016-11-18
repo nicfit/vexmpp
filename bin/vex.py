@@ -125,6 +125,9 @@ def main(app):
     except RegistrationError as ex:
         print("Registration error:\n{}".format(ex), file=sys.stderr)
         return 6
+    except ConnectionRefusedError as ex:
+        print("Connection refused:\n{}".format(ex), file=sys.stderr)
+        return 7
 
     # Server version
     server_version = yield from iqversion.get(stream, jid.host, timeout=10)
