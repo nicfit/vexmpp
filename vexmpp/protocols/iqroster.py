@@ -3,7 +3,6 @@
 APIs for dealing with Jabber rosters; ``jabber:iq:roster``
 http://xmpp.org/rfcs/rfc6121.html#roster
 '''
-import asyncio
 from lxml import etree
 from ..stanzas import Iq
 from ..stream import Mixin
@@ -17,37 +16,32 @@ ITEM_TAG = "{%s}item" % NS_URI
 GROUP_TAG = "{%s}group" % NS_URI
 
 
-@asyncio.coroutine
-def get(stream, timeout=None):
-    iq = yield from stream.sendAndWaitIq(NS_URI, timeout=timeout,
-                                         id_prefix="roster_get",
-                                         raise_on_error=True)
+async def get(stream, timeout=None):
+    iq = await stream.sendAndWaitIq(NS_URI, timeout=timeout,
+                                    id_prefix="roster_get",
+                                    raise_on_error=True)
     return iq
 
 
-@asyncio.coroutine
-def add(stream, jid, name=None, groups=None, timeout=None):
+async def add(stream, jid, name=None, groups=None, timeout=None):
     '''Add a new roster item.'''
     iq = Iq(type="set", request=("query", NS_URI), id_prefix="roster_add")
     iq.query.append(RosterItem(jid=jid, name=name, groups=groups).xml)
 
-    iq = yield from stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
+    iq = await stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
     return iq
 
 
-@asyncio.coroutine
-def update(stream, jid, name=None, groups=None, timeout=None):
+async def update(stream, jid, name=None, groups=None, timeout=None):
     '''Update roster item (same protocol as adding roster items).'''
-    return (yield from add(stream, jid, name=name, groups=groups,
-                           timeout=timeout))
+    return (await add(stream, jid, name=name, groups=groups, timeout=timeout))
 
 
-@asyncio.coroutine
-def remove(stream, jid, timeout=None):
+async def remove(stream, jid, timeout=None):
     iq = Iq(type="set", request=("query", NS_URI), id_prefix="roster_rem")
     iq.query.append(RosterItem(jid=jid, subscription="remove").xml)
 
-    iq = yield from stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
+    iq = await stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
     return iq
 
 
@@ -169,14 +163,12 @@ class RosterMixin(Mixin):
         self.roster = Roster()
         super().__init__([('roster', self.roster)])
 
-    @asyncio.coroutine
-    def postSession(self, stream):
-        roster = yield from get(stream, timeout=stream.default_timeout)
+    async def postSession(self, stream):
+        roster = await get(stream, timeout=stream.default_timeout)
         self.roster.updateRoster(roster)
 
     @xpathFilter([("/iq[@type='set']/ns:query", {"ns": NS_URI})])
-    @asyncio.coroutine
-    def onStanza(self, stream, stanza):
+    async def onStanza(self, stream, stanza):
         # Roster push
         self.roster.updateRoster(stanza)
 

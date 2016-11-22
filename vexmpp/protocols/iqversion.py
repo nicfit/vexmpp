@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import asyncio
 import platform
 from lxml import etree
 
@@ -16,11 +15,9 @@ NS_URI = "jabber:iq:version"
 GET_XPATH = ("/iq[@type='get']/ns:query", {"ns": NS_URI})
 
 
-@asyncio.coroutine
-def get(stream, to, timeout=None):
-    iq = yield from stream.sendAndWaitIq(NS_URI, to=to, raise_on_error=True,
-                                         id_prefix="version_get",
-                                         timeout=timeout)
+async def get(stream, to, timeout=None):
+    iq = await stream.sendAndWaitIq(NS_URI, to=to, raise_on_error=True,
+                                    id_prefix="version_get", timeout=timeout)
     return iq
 
 
@@ -36,8 +33,7 @@ class IqVersionMixin(Mixin):
         self._show_platform = show_platform
 
     @xpathFilter(GET_XPATH)
-    @asyncio.coroutine
-    def onStanza(self, stream, stanza):
+    async def onStanza(self, stream, stanza):
         log.debug("jabber:iq:version received")
 
         result = stanza.resultResponse()

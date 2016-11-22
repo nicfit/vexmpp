@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import asyncio
 from ..stream import Mixin
 from ..utils import xpathFilter
 
@@ -29,8 +28,7 @@ class Mixin(Mixin):
     @xpathFilter(["/iq", "/presence", "/message",
                   ("/ns:a", {"ns": NS_URI}), ("/ns:r", {"ns": NS_URI}),
                  ])
-    @asyncio.coroutine
-    def onStanza(self, stream, stanza):
+    async def onStanza(self, stream, stanza):
         self._in_count += 1
         log.debug("Stanza IN count: {:d}".format(self._in_count))
 

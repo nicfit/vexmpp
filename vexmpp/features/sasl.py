@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import asyncio
 import base64
 from lxml.etree import Element
 
@@ -7,8 +6,7 @@ from .. import suelta
 from ..protocols.sasl import SaslError, NS_URI
 
 
-@asyncio.coroutine
-def handle(stream, feature_elem, timeout=None):
+async def handle(stream, feature_elem, timeout=None):
     nsmap = {"sasl": NS_URI}
 
     server_mechs = []
@@ -51,10 +49,10 @@ def handle(stream, feature_elem, timeout=None):
 
     done = False
     while not done:
-        resp = yield from stream.wait([("/sasl:success", nsmap),
-                                       ("/sasl:failure", nsmap),
-                                       ("/sasl:challenge", nsmap),
-                                      ], timeout=timeout)
+        resp = await stream.wait([("/sasl:success", nsmap),
+                                  ("/sasl:failure", nsmap),
+                                  ("/sasl:challenge", nsmap),
+                                 ], timeout=timeout)
         if resp.xml.tag == "{%s}success" % NS_URI:
             done = True
             if resp.xml.text:

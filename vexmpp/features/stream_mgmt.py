@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-import asyncio
 from ..stanzas import Stanza
 from ..errors import makeStanzaError
 from ..protocols.stream_mgmt import NS_URI
 
 
-@asyncio.coroutine
-def handle(stream, feature_elem, sm_opts, timeout=None):
+async def handle(stream, feature_elem, sm_opts, timeout=None):
     assert(feature_elem is not None)
     nsmap = {"sm": NS_URI}
 
@@ -15,8 +13,8 @@ def handle(stream, feature_elem, sm_opts, timeout=None):
         enable_elem.set("resume", "true")
     stream.send(enable_elem)
 
-    resp = yield from stream.wait([("/sm:enabled", nsmap),
-                                   ("/sm:failed", nsmap)], timeout=timeout)
+    resp = await stream.wait([("/sm:enabled", nsmap),
+                              ("/sm:failed", nsmap)], timeout=timeout)
     if resp.name == "{%s}failed" % NS_URI:
         raise makeStanzaError(resp.xml)
 

@@ -54,29 +54,27 @@ class ClientStream(Stream):
         super().__init__(creds, state_callbacks=state_callbacks, mixins=mixins,
                          default_timeout=default_timeout)
 
-    @asyncio.coroutine
-    def _reopenStream(self, timeout=None):
+    async def _reopenStream(self, timeout=None):
         # Reopen stream
         self._parser_task.reset()
         self.send(StreamHeader(ns=CLIENT_NS_URI, to=self.creds.jid.host))
         # Server <stream:stream>
-        header = yield from self.wait(StreamHeader.XPATH, timeout)
+        header = await self.wait(StreamHeader.XPATH, timeout)
         # Server stream:features
-        features = yield from self.wait(StreamFeatures.XPATH, timeout)
+        features = await self.wait(StreamFeatures.XPATH, timeout)
 
         return features
 
-    @asyncio.coroutine
-    def negotiate(self, timeout=None):
+    async def negotiate(self, timeout=None):
         # <stream:stream>
         stream_stream = StreamHeader(ns=CLIENT_NS_URI, to=self.creds.jid.host)
         self.send(stream_stream)
 
         # Server <stream:stream>
-        _ = yield from self.wait(StreamHeader.XPATH, timeout)
+        _ = await self.wait(StreamHeader.XPATH, timeout)
 
         # Server stream:features
-        features = yield from self.wait(StreamFeatures.XPATH, timeout)
+        features = await self.wait(StreamFeatures.XPATH, timeout)
 
         # startttls
         tls_elem = features.getFeature("starttls", starttls.NS_URI)
@@ -87,25 +85,25 @@ class ClientStream(Stream):
             raise Error("TLS off by client but required by server.")
 
         if self._tls_opt != TlsOpts.off and tls_elem is not None:
-            yield from starttls.handle(self, tls_elem, timeout=timeout)
-            features = yield from self._reopenStream(timeout=timeout)
+            await starttls.handle(self, tls_elem, timeout=timeout)
+            features = await self._reopenStream(timeout=timeout)
 
         # In-band regisration
         if self._register_cb:
-            reg_form = yield from iqregister.getForm(self)
+            reg_form = await iqregister.getForm(self)
 
             self._register_cb(self.creds, reg_form.query)
 
             reg_form.type = "set"
             reg_form.swapToFrom()
             reg_form.setId()
-            _ = yield from self.sendAndWait(reg_form, timeout=timeout)
+            _ = await self.sendAndWait(reg_form, timeout=timeout)
 
         # SASL auth
         mechs_elem = features.getFeature("mechanisms", sasl.NS_URI)
         if mechs_elem is not None:
-            yield from sasl.handle(self, mechs_elem, timeout=timeout)
-            features = yield from self._reopenStream(timeout=timeout)
+            await sasl.handle(self, mechs_elem, timeout=timeout)
+            features = await self._reopenStream(timeout=timeout)
         else:
             raise Error("Missing mechanisms feature")
 
@@ -113,27 +111,26 @@ class ClientStream(Stream):
         bind_elem = features.getFeature("bind", resourcebind.NS_URI)
         if bind_elem is None:
             raise Error("Missing bind feature")
-        yield from bind.handle(self, bind_elem, timeout=timeout)
+        await bind.handle(self, bind_elem, timeout=timeout)
 
         # Stream management
         sm_elem = features.getFeature("sm", stream_mgmt.NS_URI)
         if sm_elem is not None and hasattr(self, "stream_mgmt_opts"):
-            yield from stream_mgmt.handle(self, sm_elem,
+            await stream_mgmt.handle(self, sm_elem,
                                           sm_opts=self.stream_mgmt_opts,
                                           timeout=timeout)
         for mixin in self._mixins:
-            yield from mixin.postSession(self)
+            await mixin.postSession(self)
 
     @classmethod
-    @asyncio.coroutine
-    def connect(Class, creds, host=None, port=DEFAULT_C2S_PORT,
+    async def connect(Class, creds, host=None, port=DEFAULT_C2S_PORT,
                 loop=None, timeout=None,
                 **stream_kwargs):
         '''Connect and negotiate a stream with the server. The connected stream
         is returned.'''
         loop = loop or asyncio.get_event_loop()
         (host,
-         port) = yield from resolveHostPort(host if host else creds.jid.host,
+         port) = await resolveHostPort(host if host else creds.jid.host,
                                             port, loop)
         peer = (host.host, int(port))
         log.verbose("Connecting %s..." % str(peer))
@@ -172,12 +169,12 @@ class ClientStream(Stream):
         try:
             connected = False
             (transport,
-             stream) =  yield from asyncio.wait_for(conn, timeout)
+             stream) =  await asyncio.wait_for(conn, timeout)
 
             connected = True
             peer = transport.get_extra_info("peername")
 
-            yield from stream.negotiate(timeout=timeout)
+            await stream.negotiate(timeout=timeout)
             signalEvent(state_callbacks, "sessionStarted", stream)
         except Exception as ex:
             if not connected:

@@ -19,25 +19,23 @@ class Application(object):
         self.arg_parser = argument_parser or ArgumentParser(prog=app_name)
         self.args = None
 
-    @asyncio.coroutine
-    def _main(self):
+    async def _main(self):
         '''Main entry point when constructed without a user function. Subclasses
         should implemented and return integer exit codes which will be the
         process exit value.'''
         log.warn("No user function defined.")
         return 0
 
-    @asyncio.coroutine
-    def _mainTask(self):
+    async def _mainTask(self):
         log.debug("Application::_mainTask(): {}".format(sys.argv))
 
         self.args = self.arg_parser.parse_args()
 
         exit_status = None
         if self._entry_point == self._main:
-            exit_status = yield from self._entry_point()
+            exit_status = await self._entry_point()
         else:
-            exit_status = yield from self._entry_point(self)
+            exit_status = await self._entry_point(self)
         return exit_status
 
     def run(self):

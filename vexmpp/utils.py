@@ -232,10 +232,10 @@ def xpathFilter(xpaths):
     FIXME
     '''
     if isinstance(xpaths, str):
-        # "xpath" -> [("xpath", None)] 
+        # "xpath" -> [("xpath", None)]
         xpaths = [(xpaths, None)]
     elif isinstance(xpaths, tuple) and isinstance(xpaths[0], str):
-        # ("xpath", nsmap) -> [("xpath", nsmap)] 
+        # ("xpath", nsmap) -> [("xpath", nsmap)]
         xpaths = [xpaths]
 
     def wrapper(func):
@@ -262,8 +262,7 @@ def xpathFilter(xpaths):
                     return func(*args, **kwargs)
 
             # No xpaths match, so the decorated function should not be called.
-            @asyncio.coroutine
-            def _noOpCoro(*args, **kwargs):
+            async def _noOpCoro(*args, **kwargs):
                 return None
             return _noOpCoro(*args, **kwargs)
 
@@ -273,9 +272,8 @@ def xpathFilter(xpaths):
 
 
 _dns_cache = {}
-@asyncio.coroutine
-def resolveHostPort(hostname, port, loop, use_cache=True, client_srv=True,
-                    srv_records=None, srv_lookup=True):
+async def resolveHostPort(hostname, port, loop, use_cache=True, client_srv=True,
+                          srv_records=None, srv_lookup=True):
     global _dns_cache
     def _chooseSrv(_srvs):
         # TODO: random choices based on prio/weight
@@ -286,7 +284,7 @@ def resolveHostPort(hostname, port, loop, use_cache=True, client_srv=True,
         if type(cached) is list:
             # Rechoose a SRV record
             srv_choice = _chooseSrv(cached)
-            resolved_srv = yield from resolveHostPort(srv_choice.host,
+            resolved_srv = await resolveHostPort(srv_choice.host,
                                                       srv_choice.port, loop,
                                                       use_cache=True,
                                                       client_srv=client_srv,
@@ -308,7 +306,7 @@ def resolveHostPort(hostname, port, loop, use_cache=True, client_srv=True,
 
     srv_query_type = "_xmpp-client" if client_srv else "_xmpp-server"
     try:
-        srv = yield from resolver.query("{}._tcp.{}".format(srv_query_type,
+        srv = await resolver.query("{}._tcp.{}".format(srv_query_type,
                                                             hostname),
                                         'SRV')
         srv_results = sorted(srv, key=attrgetter("priority", "weight"))
@@ -322,7 +320,7 @@ def resolveHostPort(hostname, port, loop, use_cache=True, client_srv=True,
 
         # Reduce to an IP
         if srv_choice.host != hostname:
-            resolved_srv = yield from resolveHostPort(srv_choice.host,
+            resolved_srv = await resolveHostPort(srv_choice.host,
                                                       srv_choice.port, loop,
                                                       use_cache=use_cache,
                                                       client_srv=client_srv,
@@ -335,7 +333,7 @@ def resolveHostPort(hostname, port, loop, use_cache=True, client_srv=True,
         pass
 
     # A record
-    arecord = yield from resolver.query(hostname, 'A')
+    arecord = await resolver.query(hostname, 'A')
 
     ip = arecord.pop()
     _dns_cache[hostname] = ip, port

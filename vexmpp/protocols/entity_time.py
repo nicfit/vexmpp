@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import time
-import asyncio
 from lxml import etree
 
 from ..stanzas import Iq
@@ -19,17 +18,16 @@ NS_URI = "urn:xmpp:time"
 GET_XPATH = ("/iq[@type='get']/ns:time", {"ns": NS_URI})
 
 
-def get(stream, to):
-    iq = yield from stream.sendAndWaitIq(NS_URI, to=to, child_name="time",
-                                         raise_on_error=True)
+async def get(stream, to):
+    iq = await stream.sendAndWaitIq(NS_URI, to=to, child_name="time",
+                                    raise_on_error=True)
     return iq
 
 
 class EntityTimeMixin(Mixin):
 
     @xpathFilter(GET_XPATH)
-    @asyncio.coroutine
-    def onStanza(self, stream, stanza):
+    async def onStanza(self, stream, stanza):
         log.debug("%s received" % NS_URI)
 
         result = Iq(xml=stanza.xml)

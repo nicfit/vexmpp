@@ -138,8 +138,8 @@ class File:
         return self._tmp_name
 
 
-@asyncio.coroutine
-def receiveFile(stream, si_request, maxsize=None, tempdir=None, timeout=None):
+async def receiveFile(stream, si_request, maxsize=None, tempdir=None,
+                      timeout=None):
     no_valid_streams_error = etree.Element("no-valid-streams",
                                            nsmap={None: SI_NS_URI})
 
@@ -166,7 +166,7 @@ def receiveFile(stream, si_request, maxsize=None, tempdir=None, timeout=None):
             raise BadRequestStanzaError("no stream-method field",
                                         app_err=no_valid_streams_error)
 
-        # XXX: Field class with nice accessors,  etc.. 
+        # XXX: Field class with nice accessors,  etc..
         methods = field.xpath("./x:option/x:value/text()",
                               namespaces={"x": xdata.NS_URI})
 
@@ -209,15 +209,14 @@ def receiveFile(stream, si_request, maxsize=None, tempdir=None, timeout=None):
     response = si_request.resultResponse()
     stream.send(response)
 
-    open_iq = yield from stream.wait(open_xpath, timeout=timeout)
-    new_file = yield from receiveFileCoro(stream, open_iq, file_info,
-                                          maxsize=maxsize, tempdir=tempdir,
-                                          timeout=timeout)
+    open_iq = await stream.wait(open_xpath, timeout=timeout)
+    new_file = await receiveFileCoro(stream, open_iq, file_info,
+                                     maxsize=maxsize, tempdir=tempdir,
+                                     timeout=timeout)
     return new_file
 
 
-@asyncio.coroutine
-def sendFile(stream, to_jid, filename, description=None, timeout=None):
+async def sendFile(stream, to_jid, filename, description=None, timeout=None):
     request = Iq(to=to_jid, type="set", request=("si", SI_NS_URI))
     sid = request.id
 
@@ -252,8 +251,8 @@ def sendFile(stream, to_jid, filename, description=None, timeout=None):
 
     # Initiate stream
     try:
-        response = yield from stream.sendAndWait(request, timeout=timeout,
-                                                 raise_on_error=True)
+        response = await stream.sendAndWait(request, timeout=timeout,
+                                            raise_on_error=True)
     except XmppError as ex:
         raise FileTransferError(ex)
 
@@ -277,9 +276,9 @@ def sendFile(stream, to_jid, filename, description=None, timeout=None):
     open_iq.query.attrib["stanza"] = "iq"
 
     try:
-        _ = yield from stream.sendAndWait(open_iq, raise_on_error=True,
-                                          timeout=timeout)
-        yield from sendFileCoro(stream, to_jid, path, sid, timeout=timeout)
+        _ = await stream.sendAndWait(open_iq, raise_on_error=True,
+                                     timeout=timeout)
+        await sendFileCoro(stream, to_jid, path, sid, timeout=timeout)
 
     except XmppError as ex:
         raise FileTransferError(ex)
@@ -287,9 +286,8 @@ def sendFile(stream, to_jid, filename, description=None, timeout=None):
 
 ### IBB ###
 
-@asyncio.coroutine
-def ibbSendFile(stream, to_jid, file_path, sid, block_size=BLOCK_SIZE,
-                timeout=None):
+async def ibbSendFile(stream, to_jid, file_path, sid, block_size=BLOCK_SIZE,
+                      timeout=None):
     assert(isinstance(file_path, Path))
 
     open_iq = Iq(to=to_jid, type="set", request=("open", IBB_NS_URI))
@@ -297,8 +295,8 @@ def ibbSendFile(stream, to_jid, file_path, sid, block_size=BLOCK_SIZE,
     open_iq.query.attrib["block-size"] = str(block_size)
     open_iq.query.attrib["stanza"] = "iq"
 
-    _ = yield from stream.sendAndWait(open_iq, raise_on_error=True,
-                                      timeout=timeout)
+    _ = await stream.sendAndWait(open_iq, raise_on_error=True,
+                                 timeout=timeout)
 
     with file_path.open("rb") as fp:
         seq = 0
@@ -310,19 +308,18 @@ def ibbSendFile(stream, to_jid, file_path, sid, block_size=BLOCK_SIZE,
             iq.query.attrib["sid"] = sid
             iq.query.attrib["seq"] = str(seq)
             iq.query.text = b64encode(data)
-            _ = yield from stream.sendAndWait(iq, raise_on_error=True,
-                                              timeout=timeout)
+            _ = await stream.sendAndWait(iq, raise_on_error=True,
+                                         timeout=timeout)
             seq += 1
 
     close_iq = Iq(to=to_jid, type="set", request=("close", IBB_NS_URI))
     close_iq.query.attrib["sid"] = sid
-    _ = yield from stream.sendAndWait(close_iq, raise_on_error=True,
-                                      timeout=timeout)
+    _ = await stream.sendAndWait(close_iq, raise_on_error=True,
+                                 timeout=timeout)
 
 
-@asyncio.coroutine
-def ibbReceiveFile(stream, request, file_info, maxsize=None, tempdir=None,
-                   timeout=None):
+async def ibbReceiveFile(stream, request, file_info, maxsize=None,
+                         tempdir=None, timeout=None):
 
 
     open_elem = request.getChild("open", IBB_NS_URI)
@@ -358,8 +355,8 @@ def ibbReceiveFile(stream, request, file_info, maxsize=None, tempdir=None,
                    .format(frm=from_jid.full, sid=sid)
 
         try:
-            iq = yield from stream.wait([(data_xp, nsmap), (close_xp, nsmap)],
-                                        timeout=timeout)
+            iq = await stream.wait([(data_xp, nsmap), (close_xp, nsmap)],
+                                   timeout=timeout)
         except asyncio.TimeoutError:
             ft_file.close(False)
             raise

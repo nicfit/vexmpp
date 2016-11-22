@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-import asyncio
 from ..protocols import resourcebind, sessionbind
 
 
-@asyncio.coroutine
-def handle(stream, feature_elem, timeout=None):
-    jid = yield from resourcebind.bind(stream, stream.creds.jid.resource,
-                                       timeout=timeout)
+async def handle(stream, feature_elem, timeout=None):
+    jid = await resourcebind.bind(stream, stream.creds.jid.resource,
+                                  timeout=timeout)
     if jid.resource != stream.creds.jid.resource:
         # Server generated the resource (or changed it!)
         stream.creds.jid = jid
@@ -17,4 +15,4 @@ def handle(stream, feature_elem, timeout=None):
                                                   sessionbind.NS_URI}):
         # FIXME: only do this if session is in the features
         # Start the session
-        yield from sessionbind.newsession(stream, timeout=timeout)
+        await sessionbind.newsession(stream, timeout=timeout)

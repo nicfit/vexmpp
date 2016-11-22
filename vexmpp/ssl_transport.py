@@ -561,8 +561,7 @@ class STARTTLSTransport(asyncio.Transport):
         """
         return self._extra.get(name, default)
 
-    @asyncio.coroutine
-    def starttls(self, ssl_context=None,
+    async def starttls(self, ssl_context=None,
                  post_handshake_callback=None):
         """
         Start a TLS stream on top of the socket. This is an invalid operation if
@@ -586,7 +585,7 @@ class STARTTLSTransport(asyncio.Transport):
         self._waiter = asyncio.Future()
         self._initiate_tls()
         try:
-            yield from self._waiter
+            await self._waiter
         finally:
             self._waiter = None
 
@@ -617,8 +616,7 @@ class STARTTLSTransport(asyncio.Transport):
         """
         raise NotImplementedError("Cannot write_eof() on STARTTLS transport")
 
-@asyncio.coroutine
-def create_starttls_connection(
+async def create_starttls_connection(
         loop,
         protocol_factory,
         host=None,
@@ -655,7 +653,7 @@ def create_starttls_connection(
     """
 
     if host is not None and port is not None:
-        host_addrs = yield from loop.getaddrinfo(
+        host_addrs = await loop.getaddrinfo(
             host, port,
             type=socket.SOCK_STREAM)
 
@@ -666,7 +664,7 @@ def create_starttls_connection(
             try:
                 sock = socket.socket(family=family, type=type, proto=proto)
                 sock.setblocking(False)
-                yield from loop.sock_connect(sock, address)
+                await loop.sock_connect(sock, address)
             except OSError as exc:
                 if sock is not None:
                     sock.close()
@@ -697,6 +695,6 @@ def create_starttls_connection(
                                   waiter=waiter,
                                   use_starttls=use_starttls,
                                   **kwargs)
-    yield from waiter
+    await waiter
 
     return transport, protocol
