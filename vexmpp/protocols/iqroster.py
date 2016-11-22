@@ -147,6 +147,10 @@ class Roster(object):
     def items(self):
         return list(self._items.values())
 
+    def __iter__(self):
+        for i in self.items():
+            yield i
+
     def getJids(self):
         return self._items.keys()
 
