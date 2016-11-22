@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import asyncio
 from collections import UserDict
 
 from .. import stream
@@ -18,21 +17,18 @@ NS_URI_INFO  = "{}#info".format(NS_URI_BASE)
 NS_URI_ITEMS = "{}#items".format(NS_URI_BASE)
 
 
-@asyncio.coroutine
-def getInfo(stream, to, node=None, timeout=None):
+async def getInfo(stream, to, node=None, timeout=None):
     iq = Iq(to=to, request=("query", NS_URI_INFO), attrs={"node": node},
             id_prefix="disco#info_get")
-    return (yield from stream.sendAndWait(iq, raise_on_error=True,
-                                          timeout=timeout))
+    return (await stream.sendAndWait(iq, raise_on_error=True, timeout=timeout))
 
 
-@asyncio.coroutine
-def getItems(stream, to, node=None, timeout=None):
+async def getItems(stream, to, node=None, timeout=None):
     iq = Iq(to=to, request=("query", NS_URI_ITEMS), id_prefix="disco#items_get")
     if node:
         iq.set("node", node)
 
-    iq = yield from stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
+    iq = await stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
     return iq
 
 
@@ -87,37 +83,33 @@ class DiscoCacheMixin(stream.Mixin):
         self._cache = DiscoCache()
         super().__init__([('disco_cache', self._cache)])
 
-    @asyncio.coroutine
-    def postSession(self, stream):
-        yield from self.update(stream, stream.jid.host)
+    async def postSession(self, stream):
+        await self.update(stream, stream.jid.host)
 
-    @asyncio.coroutine
-    def update(self, stream, disco_jid):
+    async def update(self, stream, disco_jid):
         self._cache.clear()
 
         # Fetch all disco info for the server
-        disco_info = yield from self._disco(stream, disco_jid, True)
+        disco_info = await self._disco(stream, disco_jid, True)
 
         # Fetch details about all the server's items (but not info about each
         # item)
         if disco_info and disco_info.items is not None:
             for jid in disco_info.items:
                 try:
-                    yield from self._disco(stream, jid, False)
+                    await self._disco(stream, jid, False)
                 except XmppError as ex:
                     log.warn("Stanza error while disco'ing item '{}': {}"
                              .format(jid.full, ex))
 
-    @asyncio.coroutine
-    def _disco(self, stream, jid, fetch_items):
+    async def _disco(self, stream, jid, fetch_items):
         if not isinstance(jid, Jid):
             jid = Jid(jid)
 
         disco_info = Info()
         disco_info.disco_jid = jid
 
-        info = yield from getInfo(stream, to=jid,
-                                  timeout=stream.default_timeout)
+        info = await getInfo(stream, to=jid, timeout=stream.default_timeout)
 
         for child in info.query:
             if child.tag == "{%s}identity" % NS_URI_INFO:
@@ -129,8 +121,8 @@ class DiscoCacheMixin(stream.Mixin):
                 disco_info.features.add(child.attrib['var'])
 
         if fetch_items:
-            items = yield from getItems(stream, jid,
-                                        timeout=stream.default_timeout)
+            items = await getItems(stream, jid,
+                                   timeout=stream.default_timeout)
 
             for child in items.query:
                 if child.tag == "{%s}item" % NS_URI_ITEMS:
@@ -147,8 +139,7 @@ class DiscoInfoMixin(stream.Mixin):
 
     @xpathFilter([("/iq[@type='get']/ns:query", {"ns": NS_URI_INFO}),
                   ("/iq[@type='get']/ns:query", {"ns": NS_URI_ITEMS})])
-    @asyncio.coroutine
-    def onStanza(self, stream, stanza):
+    async def onStanza(self, stream, stanza):
         log.debug("disco#info request")
         if stanza.query.tag.startswith("{%s}" % NS_URI_INFO):
             # disco#info

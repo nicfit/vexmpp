@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import asyncio
 from lxml import etree
 
 from .. import stream
@@ -126,8 +125,7 @@ class MucMixin(stream.Mixin):
         super().__init__([('muc_rooms', self._muc_rooms)])
 
     @xpathFilter(PRESENCE_XPATH)
-    @asyncio.coroutine
-    def onStanza(self, stream, stanza):
+    async def onStanza(self, stream, stanza):
         log.debug("MucMixin: {}".format(stanza.toXml().decode()))
 
         pres = stanza
@@ -157,9 +155,8 @@ class MucMixin(stream.Mixin):
                 del self._muc_rooms[room_jid]
 
 
-@asyncio.coroutine
-def enterRoom(stream, room, service, nick, password=None,
-              config_new_room_callback=None, timeout=None):
+async def enterRoom(stream, room, service, nick, password=None,
+                    config_new_room_callback=None, timeout=None):
     nick_jid = MucJid((room, service, nick))
 
     room_jid = nick_jid.room_jid
@@ -173,9 +170,9 @@ def enterRoom(stream, room, service, nick, password=None,
 
     stream.send(pres)
 
-    pres = yield from stream.wait([selfPresenceXpath(nick_jid),
-                                   errorPresenceXpath(nick_jid)],
-                                  timeout=timeout)
+    pres = await  stream.wait([selfPresenceXpath(nick_jid),
+                              errorPresenceXpath(nick_jid)],
+                              timeout=timeout)
     if pres.error:
         raise pres.error
 
@@ -196,22 +193,20 @@ def enterRoom(stream, room, service, nick, password=None,
             iq = Iq(to=room_jid, type="set", request=("query", NS_URI_OWNER))
             x = iq.query.appendChild("x", "jabber:x:data")
             x.attrib["type"] = "submit"
-            yield from stream.sendAndWait(iq, raise_on_error=True,
-                                          timeout=timeout)
+            await stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
         else:
             # Configure room
             iq = Iq(to=room_jid, type="get", request=("query", NS_URI_OWNER))
-            room_config = yield from stream.sendAndWait(iq, raise_on_error=True,
-                                                        timeout=timeout)
+            room_config = await stream.sendAndWait(iq, raise_on_error=True,
+                                                   timeout=timeout)
             room_config = config_new_room_callback(room_config)
-            yield from stream.sendAndWait(room_config, raise_on_error=True,
-                                          timeout=timeout)
+            await stream.sendAndWait(room_config, raise_on_error=True,
+                                     timeout=timeout)
 
     return pres
 
 
-@asyncio.coroutine
-def kick(stream, nick_jid, reason, timeout=None):
+async def kick(stream, nick_jid, reason, timeout=None):
     iq = Iq(to=nick_jid.room_jid, type="set", request=("query", NS_URI_ADMIN))
     query = ElementWrapper(iq.query)
     item = ElementWrapper(query.appendChild("item"))
@@ -219,14 +214,13 @@ def kick(stream, nick_jid, reason, timeout=None):
     item.set("role", "none")
     query.appendChild("reason").text = reason
 
-    _ = yield from stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
+    _ = await stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
 
-@asyncio.coroutine
-def leaveRoom(stream, nick_jid, leave_msg=None, timeout=None):
+async def leaveRoom(stream, nick_jid, leave_msg=None, timeout=None):
     pres = Presence(to=nick_jid, type=Presence.TYPE_UNAVAILABLE)
     if leave_msg:
         pres.appendChild("status").text = leave_msg
 
     stream.send(pres)
-    pres = yield from stream.wait(selfPresenceXpath(nick_jid))
+    pres = await stream.wait(selfPresenceXpath(nick_jid))
     return pres

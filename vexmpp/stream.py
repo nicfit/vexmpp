@@ -47,11 +47,10 @@ class ParserTask(asyncio.Task):
     def reset(self):
         self._parser.reset()
 
-    @asyncio.coroutine
-    def _run(self):
+    async def _run(self):
         while True:
             try:
-                data = yield from self._data_queue.get()
+                data = await self._data_queue.get()
 
                 elems = self._parser.parse(data)
                 for e in elems:
@@ -59,7 +58,7 @@ class ParserTask(asyncio.Task):
                     if log.getEffectiveLevel() <= logging.VERBOSE:
                         log.verbose("[STANZA IN]:\n%s" %
                                     stanza.toXml(pprint=True).decode("utf-8"))
-                    yield from self._stream._handleStanza(stanza)
+                    await self._stream._handleStanza(stanza)
             except Exception as ex:
                 log.exception(ex)
 
@@ -156,37 +155,33 @@ class Stream(asyncio.Protocol):
         if stanza:
             for m in self._mixins:
                 hook = partial(m.onSend, self, stanza)
-                asyncio.async(self._runMixin(hook))
+                asyncio.ensure_future(self._runMixin(hook))
 
-    @asyncio.coroutine
-    def sendAndWaitIq(self, child_ns, to=None, child_name="query", type="get",
-                      raise_on_error=False, timeout=None, id_prefix=None):
+    async def sendAndWaitIq(self, child_ns, to=None, child_name="query", type="get",
+                            raise_on_error=False, timeout=None, id_prefix=None):
         iq = Iq(to=to, type=type, request=(child_name, child_ns),
                 id_prefix=id_prefix)
-        resp = yield from self.sendAndWait(iq, raise_on_error=raise_on_error,
+        resp = await self.sendAndWait(iq, raise_on_error=raise_on_error,
                                            timeout=timeout)
         return resp
 
-    @asyncio.coroutine
-    def sendAndWait(self, stanza, raise_on_error=False, timeout=None):
+    async def sendAndWait(self, stanza, raise_on_error=False, timeout=None):
         if not stanza.id:
             stanza.setId()
 
         xpath = "/%s[@id='%s']" % (stanza.name, stanza.id)
         self.send(stanza)
-        resp = yield from self.wait([(xpath, None)], timeout=timeout)
+        resp = await self.wait([(xpath, None)], timeout=timeout)
 
         if resp.error is not None and raise_on_error:
             raise resp.error
         else:
             return resp
 
-    @asyncio.coroutine
-    def negotiate(self, timeout=None):
+    async def negotiate(self, timeout=None):
         raise NotImplementedError()
 
-    @asyncio.coroutine
-    def wait(self, xpaths, timeout=None):
+    async def wait(self, xpaths, timeout=None):
         '''``xpaths`` is a 2-tuple of the form (xpath, nsmap), or a list of
         the same tuples to wait on a choice of matches. The first matched
         stanza is returned. Passing a ``timeout`` argument will raise a
@@ -215,7 +210,7 @@ class Stream(asyncio.Protocol):
         self._waiter_futures.append(fut)
         try:
             with timedWait() as timer_stat:
-                match = yield from asyncio.wait_for(fut, timeout)
+                match = await asyncio.wait_for(fut, timeout)
 
             if stream_wait_met:
                 stream_wait_met.update(timer_stat["total"])
@@ -243,8 +238,7 @@ class Stream(asyncio.Protocol):
     def starttls_made(self, transport):
         self.connection_made(transport, tls=True)
 
-    @asyncio.coroutine
-    def _handleStanza(self, stanza):
+    async def _handleStanza(self, stanza):
 
         if isinstance(stanza, stanzas.StreamError):
             signalEvent(self._callbacks, "streamError", self, stanza)
@@ -253,7 +247,7 @@ class Stream(asyncio.Protocol):
 
         for m in self._mixins:
             hook = partial(m.onStanza, self, stanza)
-            asyncio.async(self._runMixin(hook))
+            asyncio.ensure_future(self._runMixin(hook))
 
         self._stanza_queue.append(QueuedStanza(stanza))
 
@@ -265,7 +259,7 @@ class Stream(asyncio.Protocol):
                         # XXX: How useful is this since _stanza_queue?
                         # Yield the event loop, which is essential for a handle
                         # and wait in quick succession.
-                        yield from asyncio.sleep(0)
+                        await asyncio.sleep(0)
 
     # asyncio.Protocol implementation
     def data_received(self, data):
@@ -289,10 +283,9 @@ class Stream(asyncio.Protocol):
             t = int(t)
         self._default_timeout = t
 
-    @asyncio.coroutine
-    def _runMixin(self, functor):
+    async def _runMixin(self, functor):
         try:
-            yield from functor()
+            await functor()
         except:
             log.exception("{} mixin error".format(functor.__class__.__name__))
 
@@ -306,13 +299,11 @@ class Mixin(object):
         '''
         self._exports = export_tuples if export_tuples else []
 
-    @asyncio.coroutine
-    def postSession(self, stream):
+    async def postSession(self, stream):
         '''Called after stream negotiation and session creation.'''
         pass
 
-    @asyncio.coroutine
-    def onStanza(self, stream, stanza):
+    async def onStanza(self, stream, stanza):
         '''Called for each incoming Stanza.
 
         See :func:`vexmpp.utils.xpathFilter` for a decorator that can filter
@@ -320,8 +311,7 @@ class Mixin(object):
         '''
         pass
 
-    @asyncio.coroutine
-    def onSend(self, stream, stanza):
+    async def onSend(self, stream, stanza):
         '''Called for each outgoing stanza.'''
         pass
 

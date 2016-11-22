@@ -24,8 +24,7 @@ class SubscriptionAckMixin(Mixin):
     '''
 
     @xpathFilter(S10N_XPATHS)
-    @asyncio.coroutine
-    def onStanza(self, stream, stanza):
+    async def onStanza(self, stream, stanza):
         if stanza.xml.xpath(PRES_SUB_XPATH):
             stream.send(Presence(to=stanza.frm,
                                  type=Presence.TYPE_SUBSCRIBED))
@@ -47,8 +46,7 @@ class DenySubscriptionAckMixin(Mixin):
     '''
 
     @xpathFilter(S10N_XPATHS)
-    @asyncio.coroutine
-    def onStanza(self, stream, stanza):
+    async def onStanza(self, stream, stanza):
         if stanza.xml.xpath(PRES_SUB_XPATH):
             stream.send(Presence(to=stanza.frm,
                                  type=Presence.TYPE_UNSUBSCRIBED))
@@ -114,15 +112,13 @@ class PresenceCacheMixin(Mixin, PresenceDict):
         self._presence_update_event = DataEvent()
         self._self_presence = None
 
-    @asyncio.coroutine
-    def waitForUpdate(self, timeout=None):
-        pres = yield from asyncio.wait_for(self._presence_update.wait(),
-                                           timeout=timeout)
+    async def waitForUpdate(self, timeout=None):
+        pres = await asyncio.wait_for(self._presence_update.wait(),
+                                      timeout=timeout)
         return pres
 
     @xpathFilter("/presence")
-    @asyncio.coroutine
-    def onStanza(self, stream, presence):
+    async def onStanza(self, stream, presence):
 
         if (presence.type not in [Presence.TYPE_AVAILABLE,
                                   Presence.TYPE_UNAVAILABLE] or
@@ -182,7 +178,6 @@ class DataEvent(asyncio.Event):
         self._data= None
         super().clear()
 
-    @asyncio.coroutine
-    def wait(self):
-        _ = yield from super().wait()
+    async def wait(self):
+        _ = await super().wait()
         return self._data
