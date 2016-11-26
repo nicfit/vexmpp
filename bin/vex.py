@@ -25,9 +25,9 @@ from vexmpp.application import Application
 from vexmpp.client import (Credentials, DEFAULT_C2S_PORT, ClientStream,
                            ClientStreamCallbacks, TlsOpts)
 from vexmpp.stanzas import Presence
+from vexmpp.protocols.xdata import XdataForm
 from vexmpp.protocols import iqversion, stream_mgmt, iqregister
-from vexmpp.utils import ArgumentParser
-from vexmpp import log
+from nicfit import ArgumentParser, DEFAULT_LOGGING_CONFIG
 
 
 def _outputXml(stanza):
@@ -42,11 +42,6 @@ class RegistrationError(Exception):
 
 
 def _register(creds, reg_query):
-    def _appendValue(elem, value_txt):
-        value_elem = etree.Element("value")
-        value_elem.text = value_txt
-        elem.append(value_elem)
-
     oob = reg_query.find("{jabber:x:oob}x")
     if oob is not None:
         inst = reg_query.find("{%s}instructions" % iqregister.NS_URI)
@@ -55,26 +50,8 @@ def _register(creds, reg_query):
 
     xdata = reg_query.find("{jabber:x:data}x")
     if xdata is not None:
-        username = xdata.find("{jabber:x:data}field[@var='username']")
-        _appendValue(username, creds.jid.user)
-
-        password = xdata.find("{jabber:x:data}field[@var='password']")
-        _appendValue(password, creds.password)
-
-        title = xdata.find("{jabber:x:data}title")
-        if title is not None:
-            text = title.text
-            print("{:^80}\n{hr:^80}".format(text, hr=("=" * len(text))))
-        inst = xdata.find("{jabber:x:data}instructions")
-        print("Instructions:\n\t{}\n".format(inst.text)
-                if inst is not None else "", end="")
-        for field in xdata.findall("{jabber:x:data}field"):
-            if field.get("var") in ("username", "password"):
-                continue
-
-            print("{}: ".format(field.get("label") or field.get("var")),
-                    end="")
-            raise NotImplementedError()
+        form = XdataForm(xml=xdata.xml)
+        getXData(form, creds)
     else:
         username = reg_query.find("{%s}username" % iqregister.NS_URI)
         username.text = creds.jid.user
@@ -82,8 +59,40 @@ def _register(creds, reg_query):
         password.text = creds.password
 
 
-@asyncio.coroutine
-def main(app):
+def getXData(form, creds):
+    def _prompt(txt=None):
+        if txt:
+            return input("{txt}: ".format(**locals()))
+        else:
+            return input()
+
+    if form.title:
+        print("{:^80}\n{hr:^80}".format(form.title, hr=("=" * len(form.title))))
+    if form.instructions:
+        print("Instructions:\n\t{}\n".format(form.instructions))
+
+    def _appendValue(elem, value_txt):
+        value_elem = etree.Element("value")
+        value_elem.text = value_txt
+        elem.append(value_elem)
+
+    for field in form.findall("{jabber:x:data}field"):
+        var = field.get("var")
+        value = field.find("{jabber:x:data}value")
+        print("{label} ({var}): {value}"
+              .format(label=field.get("label"), var=var,
+                      value=value.text if value else ""), end="")
+        if not field.find("{jabber:x:data}value"):
+            if var in ("username", "password"):
+                _appendValue(field, creds.jid.user if var == "username"
+                                                   else creds.password)
+            else:
+                resp = _prompt()
+                form.setValue(var, resp)
+        print()
+
+
+async def main(app):
     args = app.args
 
     if "VEX_PASSWD" in os.environ:
@@ -103,13 +112,11 @@ def main(app):
 
     try:
         reg_cb = _register if args.register else None
-        stream = yield from ClientStream.connect(Credentials(jid, password),
-                                                 host=args.host, port=args.port,
-                                                 state_callbacks=Callbacks(),
-                                                 tls_opt=tls_opt,
-                                                 mixins=mixins,
-                                                 register_cb=reg_cb,
-                                                 timeout=5)
+        stream = await ClientStream.connect(Credentials(jid, password),
+                                            host=args.host, port=args.port,
+                                            state_callbacks=Callbacks(),
+                                            tls_opt=tls_opt, mixins=mixins,
+                                            register_cb=reg_cb, timeout=5)
     except asyncio.TimeoutError:
         print("Connection timed out", file=sys.stderr)
         return 1
@@ -130,7 +137,7 @@ def main(app):
         return 7
 
     # Server version
-    server_version = yield from iqversion.get(stream, jid.host, timeout=10)
+    server_version = await iqversion.get(stream, jid.host, timeout=10)
     _outputXml(server_version)
 
     # Initial presence
@@ -142,7 +149,7 @@ def main(app):
 
     while True:
         try:
-            stanza = yield from stream.wait(("/*", None), timeout=10)
+            stanza = await stream.wait(("/*", None), timeout=10)
             _outputXml(stanza)
         except asyncio.TimeoutError:
             pass
@@ -194,8 +201,7 @@ optgroup.add_argument("--tls", action="store",
 optgroup.add_argument("--stream-mgmt", action="store_true", default=False,
                       help="Enable stream management (XEP 198).")
 
-log.addCommandLineArgs(arg_parser)
-logging.config.fileConfig(StringIO(log.DEFAULT_FILE_CONFIG))
+logging.config.fileConfig(StringIO(DEFAULT_LOGGING_CONFIG()))
 
 app = Application(main, argument_parser=arg_parser)
 sys.exit(app.run())

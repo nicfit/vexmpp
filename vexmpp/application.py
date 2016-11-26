@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import sys
 import asyncio
-from .utils import ArgumentParser
+from nicfit import ArgumentParser
 
-from .log import getLogger
+from . import getLogger
 log = getLogger(__name__)
 
 

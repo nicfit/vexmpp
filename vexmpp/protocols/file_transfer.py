@@ -9,7 +9,7 @@ from collections import namedtuple
 
 from lxml import etree
 
-from ..log import getLogger
+from .. import getLogger
 log = getLogger(__name__)
 
 from ..errors import *

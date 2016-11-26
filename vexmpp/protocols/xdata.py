@@ -8,7 +8,7 @@ class XdataForm(ElementWrapper):
     '''XEP-0004'''
 
     def __init__(self, xml=None):
-        if xml:
+        if xml is not None:
             if xml.tag != "{%s}x" % NS_URI:
                 raise ValueError("xml is not x-data")
         else:
@@ -18,28 +18,26 @@ class XdataForm(ElementWrapper):
 
         super().__init__(xml)
 
-    def _tagname(self, tag):
-        return self._makeTagName(tag, NS_URI)
-
     @property
     def title(self):
-        self._getChildText(_tagname("title"))
+        self._getChildText("title")
 
     @title.setter
     def title(self, t):
-        self._setChildText(self._makeTagName("title"), t)
+        self._setChildText("title", t)
 
     @property
     def instructions(self):
-        self._getChildText(self._makeTagName("instructions"))
+        self._getChildText("instructions")
 
     @instructions.setter
     def instructions(self, t):
-        self._setChildText(self._makeTagName("instructions"), t)
+        self._setChildText("instructions", t)
 
     def field(self, var):
         return self.find("./{field}[@var='{var}']"
-                         .format(var=var, field=self._tagname("field")))
+                         .format(var=var, field=self._makeTagName("field",
+                                                                  NS_URI)))
 
     def appendListField(self, var, options, default=None, multi=False):
         assert(var)
@@ -56,3 +54,6 @@ class XdataForm(ElementWrapper):
             f.appendChild("option").appendChild("value").text = val
 
         return f
+
+    def setValue(self, field, val):
+        self.field(field)._setChildText("value", val)

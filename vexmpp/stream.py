@@ -14,7 +14,7 @@ from .parser import Parser
 from .utils import signalEvent
 from .utils import benchmark as timedWait
 
-from .log import getLogger
+from . import getLogger
 log = getLogger(__name__)
 
 

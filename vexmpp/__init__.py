@@ -26,4 +26,5 @@ Run with --help/-h for usage information or read the docs at
 %(__url__)s
 """ % (locals())
 
-from . import log                                                       # noqa
+from nicfit import getLogger, rootLogger
+log = rootLogger(__package__)

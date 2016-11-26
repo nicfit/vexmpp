@@ -2,7 +2,7 @@
 import math
 from collections import OrderedDict
 
-from .log import getLogger
+from . import getLogger
 log = getLogger(__name__)
 
 

@@ -5,14 +5,39 @@ import logging.config
 import argparse
 from pathlib import Path
 
+"""
+- Adds log level VERBOSE, DEBUG < VERBOSE < INFO.
+- rootLogger TODO
+- getLogger TODO
+- simpleConfig TODO
+"""
+
 LOG_FORMAT = "[%(asctime)s] %(name)-25s [%(levelname)-8s]: %(message)s"
 METRICS_FORMAT = "<metrics time='%(asctime)s'>%(message)s</metrics>"
 
-logging.VERBOSE = logging.DEBUG + 1
+logging.VERBOSE = logging.DEBUG + ((logging.INFO - logging.DEBUG) // 2)
 logging.addLevelName(logging.VERBOSE, "VERBOSE")
 LEVELS = [logging.DEBUG, logging.VERBOSE, logging.INFO,
           logging.WARNING, logging.ERROR, logging.CRITICAL]
 LEVEL_NAMES = [logging.getLevelName(l).lower() for l in LEVELS]
+
+
+def getLogger(name):
+    OrigLoggerClass = logging.getLoggerClass()
+    try:
+        logging.setLoggerClass(Logger)
+        return logging.getLogger(name)
+    finally:
+        logging.setLoggerClass(OrigLoggerClass)
+
+
+
+_ROOT_LOGGER_NAME = None
+def rootLogger(name):
+    global _ROOT_LOGGER_NAME
+    if _ROOT_LOGGER_NAME is None:
+        _ROOT_LOGGER_NAME = name
+    return getLogger(name)
 
 
 class Logger(logging.getLoggerClass()):
@@ -30,33 +55,6 @@ class Logger(logging.getLoggerClass()):
         self.log(logging.VERBOSE, msg, *args, **kwargs)
 
 
-def getLogger(name):
-    OrigLoggerClass = logging.getLoggerClass()
-    try:
-        logging.setLoggerClass(Logger)
-        return logging.getLogger(name)
-    finally:
-        logging.setLoggerClass(OrigLoggerClass)
-
-
-log = getLogger("vexmpp")
-log.addHandler(logging.NullHandler())
-
-
-def simpleConfig(level=logging.WARNING):
-    '''Configures the ``vexmpp`` logger with a
-    simple stdout logging handler set to ``level``.'''
-    global log
-
-    log.setLevel(level)
-
-    formatter = logging.Formatter(LOG_FORMAT)
-    console = logging.StreamHandler()
-    console.setFormatter(formatter)
-
-    log.handlers.clear()
-    log.addHandler(console)
-
 
 def _optSplit(opt):
     if ':' in opt:
@@ -64,6 +62,7 @@ def _optSplit(opt):
     else:
         first, second = None, opt
     return first, second
+
 
 
 class LogLevelAction(argparse._AppendAction):
@@ -79,6 +78,7 @@ class LogLevelAction(argparse._AppendAction):
 
         values = tuple([logger, level])
         super().__call__(parser, namespace, values, option_string=option_string)
+
 
 
 class LogFileAction(argparse._AppendAction):
@@ -117,39 +117,17 @@ class LogFileAction(argparse._AppendAction):
         super().__call__(parser, namespace, values, option_string=option_string)
 
 
-def addCommandLineArgs(arg_parser):
-    arg_parser.register("action", "log_levels", LogLevelAction)
-    arg_parser.register("action", "log_files", LogFileAction)
 
-    group = arg_parser.add_argument_group("Logging options")
-    group.add_argument(
-        "-l", "--log-level", dest="log_levels",
-        action="log_levels", metavar="LOGGER:LEVEL", default=[],
-        help="Set logging levels (the option may be specified multiple "
-             "times). The level of a specific logger may be set with "
-             "the syntax LOGGER:LEVEL, but LOGGER is optional so "
-             "if only LEVEL is given it applies to the root logger. "
-             "Valid level names are: %s" % ", ".join(LEVEL_NAMES))
-
-    group.add_argument(
-        "-L", "--log-file", dest="log_files",
-        action="log_files", metavar="LOGGER:FILE", default=[],
-        help="Set log files (the option may be specified multiple "
-             "times). The level of a specific logger may be set with "
-             "the syntax LOGGER:FILE, but LOGGER is optional so "
-             "if only FILE is given it applies to the root logger. "
-             "The special FILE values 'stdout', 'stderr', and 'null' "
-             "result on logging to the console, or /dev/null in the "
-             "latter case.")
-
-DEFAULT_FILE_CONFIG = """
+# FIXME: metrics does not really belong in generic version
+def DEFAULT_LOGGING_CONFIG():
+    return """
 ###
 #logging configuration
 #https://docs.python.org/3/library/logging.config.html#configuration-file-format
 ###
 
 [loggers]
-keys = root, vexmpp, vexmpp.metrics
+keys = root, {root_logger}, {root_logger}.metrics
 
 [handlers]
 keys = console, metrics
@@ -161,9 +139,9 @@ keys = generic, metrics
 level = WARN
 handlers = console
 
-[logger_vexmpp]
+[logger_{root_logger}]
 level = NOTSET
-qualname = vexmpp
+qualname = {root_logger}
 ; When adding more specific handlers than what exists on the root you'll
 ; likely want to set propagate to false.
 handlers =
@@ -178,19 +156,20 @@ formatter = generic
 [formatter_generic]
 format = {default_format}
 
-[logger_vexmpp.metrics]
+[logger_{root_logger}.metrics]
 level = NOTSET
-qualname = vexmpp.metrics
+qualname = {root_logger}.metrics
 handlers = metrics
 propagate = 0
 
 [handler_metrics]
 class = FileHandler
-args = ("vexmpp-metrics.log", "w", None, True)
+args = ("{root_logger}-metrics.log", "w", None, True)
 level = NOTSET
 formatter = metrics
 
 [formatter_metrics]
 format = {metrics_format}
 
-""".format(default_format=LOG_FORMAT, metrics_format=METRICS_FORMAT)
+""".format(default_format=LOG_FORMAT, metrics_format=METRICS_FORMAT,
+           root_logger=_ROOT_LOGGER_NAME)

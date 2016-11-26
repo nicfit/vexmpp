@@ -7,7 +7,7 @@ from ..stanzas import Iq
 from ..stream import Mixin
 from ..utils import xpathFilter
 
-from ..log import getLogger
+from .. import getLogger
 log = getLogger(__name__)
 
 

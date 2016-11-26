@@ -155,5 +155,5 @@ class Parser(object):
                 self._curr.elem.text += data
 
 
-from .log import getLogger
+from . import getLogger
 log = getLogger(__name__)

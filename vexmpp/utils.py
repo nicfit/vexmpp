@@ -1,21 +1,14 @@
 # -*- coding: utf-8 -*-
-import os
-import sys
 import time
 import random
 import asyncio
-import logging
-import argparse
 import functools
-from enum import Enum
 from operator import attrgetter
 from ipaddress import ip_address
-from configparser import ConfigParser
 
 import aiodns
 
-from .log import LEVEL_NAMES, getLogger
-
+from nicfit._logging import LEVEL_NAMES, getLogger
 log = getLogger(__name__)
 
 
@@ -52,109 +45,6 @@ def signalEvent(callbacks, event, *args, **kwargs):
                 functools.partial(func, *args, **kwargs))
     else:
         log.debug("No callbacks set")
-
-
-class ArgumentParser(argparse.ArgumentParser):
-    class ConfigOpt(Enum):
-        none = 0
-        option = 1
-        argument = 2
-
-    def __init__(self,
-                 config_opts=ConfigOpt.none, config_required=False,
-                 sample_config=None, config_class=None,
-                 default_config_file=None,
-                 add_debug_opts=True,
-                 **kwargs):
-
-        kwargs["add_help"] = True
-        super().__init__(**kwargs)
-
-        self._ConfigParser = config_class or ConfigParser
-
-        if config_opts != self.ConfigOpt.none:
-            group = self.add_argument_group("Configuration options")
-
-            # We don't set this in the parser because then we could not use
-            # --example-config without a -c.
-            self._config_required = config_required
-
-            if config_opts == self.ConfigOpt.option:
-                group.add_argument("-c", "--config", dest="config_file",
-                                   metavar="FILENAME",
-                                   default=default_config_file,
-                                   help="Configuration file (ini file format).")
-            else:
-                self.add_argument("config_file", default=default_config_file,
-                                  help="Configuration file (ini file format).",
-                                  nargs="?" if default_config_file else None)
-
-            group.add_argument("-o", dest="config_overrides", action="append",
-                               default=[], metavar="SECTION:OPTION=VALUE",
-                               help="Overrides the values for configuration "
-                                    "OPTION in [SECTION].")
-
-            if sample_config:
-                self._sample_config = sample_config
-                group.add_argument("--sample-config", dest="__sample_config",
-                                   action="store_true",
-                                   help="Output a sample configuration file.")
-
-        if add_debug_opts:
-            group = self.add_argument_group("Debugging options")
-            group.add_argument("--pdb", action="store_true", dest="debug_pdb",
-                               help="Invoke pdb (or ipdb if available) on "
-                                    "uncaught exceptions.")
-
-    def _handleConfigFileOpts(self, args):
-        if "config_file" in args:
-            cfg_file = args.config_file
-
-            if not cfg_file and self._config_required:
-                self.error("Configuration file required.")
-                return
-
-            cfg_file = os.path.expanduser(os.path.expandvars(cfg_file))
-            cfg_file = os.path.abspath(cfg_file)
-            # Stash the full known path
-            args.config_file = cfg_file
-
-            # This combo of args will cause comments to be preserves when
-            # writing.
-            cfg_parser = self._ConfigParser(allow_no_value=True,
-                                            comment_prefixes=None)
-
-            try:
-                read_files = cfg_parser.read([cfg_file])
-                if not read_files:
-                    raise IOError("file not found: {}".format(cfg_file))
-
-                for override in args.config_overrides:
-                     key, val = override.split('=')
-                     sect, opt = key.split(':')
-                     cfg_parser.set(sect, opt, val)
-
-                logging.config.fileConfig(cfg_parser)
-            except Exception as ex:
-                self.error("Configuration file error: %s" % str(ex))
-
-            args.config_obj = cfg_parser
-
-    def parse_args(self, args=None, namespace=None):
-
-        # Print example config and exit, if requested. Done before actually
-        # parsing to handle even without required arguments.
-        if "--sample-config" in (args or sys.argv):
-            print(self._sample_config)
-            self.exit()
-
-        parsed_args = super().parse_args(args, namespace)
-
-        # Handle config file option, parses and sets'parsed_args.config_obj'.
-        # This call may not return.
-        self._handleConfigFileOpts(parsed_args)
-
-        return parsed_args
 
 
 def stripNsFromTag(tag, ns):

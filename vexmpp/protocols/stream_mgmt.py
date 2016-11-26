@@ -2,7 +2,7 @@
 from ..stream import Mixin
 from ..utils import xpathFilter
 
-from ..log import getLogger
+from .. import getLogger
 log = getLogger(__name__)
 
 NS_URI = "urn:xmpp:sm:3"

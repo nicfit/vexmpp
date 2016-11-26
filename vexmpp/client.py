@@ -16,7 +16,7 @@ from .protocols import (resourcebind, iqroster, presence, iqversion,
 
 DEFAULT_C2S_PORT = 5222
 
-from .log import getLogger
+from . import getLogger
 log = getLogger(__name__)
 
 

@@ -11,7 +11,7 @@ Multi-user chat (aka XEP 45)
 http://xmpp.org/extensions/xep-0045.html
 '''
 
-from ..log import getLogger
+from .. import getLogger
 log = getLogger(__name__)
 
 NS_URI = "http://jabber.org/protocol/muc"

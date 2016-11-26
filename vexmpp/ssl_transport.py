@@ -27,7 +27,7 @@ from enum import Enum
 
 import OpenSSL.SSL
 
-from .log import getLogger
+from . import getLogger
 logger = getLogger(__name__)
 
 

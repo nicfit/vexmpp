@@ -9,7 +9,7 @@ from ..utils import xpathFilter
 
 '''XEP 30'''
 
-from ..log import getLogger
+from .. import getLogger
 log = getLogger(__name__)
 
 NS_URI_BASE  = "http://jabber.org/protocol/disco"

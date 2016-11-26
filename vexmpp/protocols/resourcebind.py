@@ -3,7 +3,7 @@ from lxml import etree
 from ..jid import Jid
 from ..stanzas import Iq
 
-from ..log import getLogger
+from .. import getLogger
 log = getLogger(__name__)
 
 NS_URI = "urn:ietf:params:xml:ns:xmpp-bind"
