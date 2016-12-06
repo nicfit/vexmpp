@@ -8,7 +8,7 @@ from ipaddress import ip_address
 
 import aiodns
 
-from nicfit._logging import LEVEL_NAMES, getLogger
+from nicfit import getLogger
 log = getLogger(__name__)
 
 

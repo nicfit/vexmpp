@@ -1,3 +1,4 @@
 lxml
 PyOpenSSL
 aiodns
+nicfit.py

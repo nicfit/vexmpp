@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
+from nicfit import getLogger
 
 
 __project_name__ = 'vexmpp'
@@ -9,7 +10,7 @@ __author_email__ = 'travis@pobox.com'
 __url__ = 'https://bitbucket.org/nicfit/vexmpp'
 __description__ = 'XMPP for Python3'
 
-__version__ = '0.4.0-alpha'
+__version__ = '0.5.0-alpha'
 __release__ = __version__.split('-')[1] if '-' in __version__ else "final"
 __version_info__ = \
     namedtuple("Version", "major, minor, maint, release")(
@@ -26,5 +27,4 @@ Run with --help/-h for usage information or read the docs at
 %(__url__)s
 """ % (locals())
 
-from nicfit import getLogger, rootLogger
-log = rootLogger(__package__)
+log = getLogger(__package__)
