@@ -3,13 +3,13 @@
 import os
 import sys
 import asyncio
-import logging.config
-from io import StringIO
 from getpass import getpass
 
 import aiodns
 import OpenSSL.SSL
 from lxml import etree
+from nicfit import ArgumentParser, LOGGING_CONFIG
+from nicfit.aio import Application
 
 try:
     from pygments import highlight
@@ -19,6 +19,7 @@ try:
 except:
     _has_pygments = False
 
+import vexmpp
 from vexmpp.jid import Jid
 from vexmpp.errors import XmppError
 from vexmpp.client import (Credentials, DEFAULT_C2S_PORT, ClientStream,
@@ -26,8 +27,6 @@ from vexmpp.client import (Credentials, DEFAULT_C2S_PORT, ClientStream,
 from vexmpp.stanzas import Presence
 from vexmpp.protocols.xdata import XdataForm
 from vexmpp.protocols import iqversion, stream_mgmt, iqregister
-from nicfit import ArgumentParser, LOGGING_CONFIG
-from nicfit.aio import Application
 
 
 def _outputXml(stanza):
@@ -182,7 +181,8 @@ class Callbacks(ClientStreamCallbacks):
 
 about = "Simple XMPP client. The user will be prompted for a login password " \
         "unless the environment variable VEX_PASSWD is set."
-app = Application(main, description=about)
+app = Application(main, name="vex", description=about,
+                  version=vexmpp.__version__)
 app.arg_parser.add_argument("jid", type=Jid, help="Jabber ID for login")
 app.arg_parser.add_argument("--register", action="store_true",
                             help="Register for an account before logging in.")
@@ -190,7 +190,8 @@ app.arg_parser.add_argument("--host", help="Alternative server for connecting")
 app.arg_parser.add_argument("--port", type=int, default=DEFAULT_C2S_PORT,
                             help="Alternative port for connecting")
 app.arg_parser.add_argument("--disconnect", action="store_true",
-                            help="Disconnect once stream negotiation completes.")
+                            help="Disconnect once stream negotiation "
+                                 "completes.")
 optgroup = app.arg_parser.add_argument_group("Stream feature options")
 optgroup.add_argument("--tls", action="store",
                       default="on", choices=[e.name for e in TlsOpts],
@@ -198,5 +199,5 @@ optgroup.add_argument("--tls", action="store",
 optgroup.add_argument("--stream-mgmt", action="store_true", default=False,
                       help="Enable stream management (XEP 198).")
 
-logging.config.fileConfig(StringIO(LOGGING_CONFIG("vexmpp")))
+LOGGING_CONFIG("vexmpp", init_logging=True)
 app.run()
