@@ -13,7 +13,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://bitbucket.org/nicfit/vexmpp/issues.
+Report bugs at https://github.com/nicfit/vexmpp/issues.
 
 If you are reporting a bug, please include:
 
@@ -24,13 +24,13 @@ If you are reporting a bug, please include:
 Fix Bugs
 ~~~~~~~~
 
-Look through the BitBucket issues for bugs. Anything tagged with "bug"
+Look through the GitHub issues for bugs. Anything tagged with "bug"
 is open to whoever wants to implement it.
 
 Implement Features
 ~~~~~~~~~~~~~~~~~~
 
-Look through the BitBucket issues for features. Anything tagged with
+Look through the GitHub issues for features. Anything tagged with
 "feature" is open to whoever wants to implement it.
 
 Write Documentation
@@ -44,7 +44,7 @@ Submit Feedback
 ~~~~~~~~~~~~~~~
 
 The best way to send feedback is to file an issue at
-https://bitbucket.org/nicfit/vexmpp/issues.
+https://github.com/nicfit/vexmpp/issues.
 
 If you are proposing a feature:
 
@@ -56,12 +56,13 @@ If you are proposing a feature:
 Get Started!
 ------------
 
-Ready to contribute? Here's how to set up `vexmpp` for local development.
+Ready to contribute? Here's how to set up `{{ cookiecutter.github_repo }}` for
+local development.
 
-1. Fork the `vexmpp` repo on BitBucket.
+1. Fork the `{{ cookiecutter.github_repo }}` repo on GitHub.
 2. Clone your fork locally::
 
-    $ hg clone https://your_name_here@bitbucket.org/your_name_here/vexmpp
+    $ git clone git@github.com:your_name_here/vexmpp.git
 
 3. Install your local copy into a virtualenv. Assuming you have
    virtualenvwrapper installed, this is how you set up your fork for local
@@ -73,26 +74,28 @@ Ready to contribute? Here's how to set up `vexmpp` for local development.
 
 4. Create a branch for local development::
 
-    $ hg branch name-of-your-bugfix-or-feature
-    $ hg up name-of-your-bugfix-or-feature
+    $ git checkout -b name-of-your-bugfix-or-feature
 
    Now you can make your changes locally.
 
 5. When you're done making changes, check that your changes pass flake8 and the
-   tests, including testing other Python versions with tox::
+   tests, including testing other Python versions with tox:
 
-    $ flake8 vexmpp tests
-    $ python setup.py test
-    $ tox
+.. code-block:: bash
 
-   To get flake8 and tox, just pip install them into your virtualenv.
+    $ make lint
+    $ make test
+    $ make test-all    # Optional, requires multiple versions of Python
 
-6. Commit your changes and push your branch to BitBucket.::
+To get flake8 and tox, just pip install them into your virtualenv.
 
-    $ hg commit -m "Your detailed description of your changes."
-    $ hg push
+6. Commit your changes and push your branch to GitHub.::
 
-7. Submit a pull request through the BitBucket website.
+    $ git add .
+    $ git commit -m "Your detailed description of your changes."
+    $ git push origin name-of-your-bugfix-or-feature
+
+7. Submit a pull request through the GitHub website.
 
 
 Pull Request Guidelines
@@ -105,12 +108,5 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
 3. The pull request should work for Python 2.7, and 3.3, 3.4, 3.5, and for PyPy.  Check
-   https://travis-ci.org/nicfit/vexmpp/pull_requests
+   https://travis-ci.org/nicfit/vexmpp/pulls
    and make sure that the tests pass for all supported Python versions.
-
-Tips
-----
-
-To run a subset of tests::
-
-    $ python -m unittest tests.test_vexmpp

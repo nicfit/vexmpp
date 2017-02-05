@@ -1,0 +1,9 @@
+wheel
+watchdog
+tox
+flake8
+twine
+Sphinx
+check-manifest
+#gitchangelog
+git+https://github.com/nicfit/gitchangelog.git

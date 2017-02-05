@@ -1,13 +1,4 @@
-=======
-Credits
-=======
-
-Development Lead
-----------------
+Authors
+-------
 
 * Travis Shirk <travis@pobox.com>
-
-Contributors
-------------
-
-None yet. Why not be the first?

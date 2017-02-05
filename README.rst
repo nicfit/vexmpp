@@ -1,26 +1,31 @@
-===============================
+======
 vexmpp
-===============================
-
-.. image:: https://badge.fury.io/py/vexmpp.svg
-    :target: http://badge.fury.io/py/vexmpp
-
-.. image:: https://travis-ci.org/nicfit/vexmpp.png?branch=master
-        :target: https://travis-ci.org/nicfit/vexmpp
-
-.. image:: https://img.shields.io/travis/nicfit/vexmpp.svg
-        :target: https://travis-ci.org/nicfit/vexmpp
-
-.. image:: https://img.shields.io/pypi/v/vexmpp.svg
-        :target: https://pypi.python.org/pypi/vexmpp
-
+======
 
 XMPP for Python3
 
-* Free software: GPL license
-* Documentation: https://vexmpp.readthedocs.org.
+Status
+------
+.. image:: https://img.shields.io/pypi/v/vexmpp.svg
+   :target: https://pypi.python.org/pypi/vexmpp/
+   :alt: Latest Version
+.. image:: https://img.shields.io/pypi/status/vexmpp.svg
+   :target: https://pypi.python.org/pypi/vexmpp/
+   :alt: Project Status
+.. image:: https://travis-ci.org/nicfit/vexmpp.svg?branch=master
+   :target: https://travis-ci.org/nicfit/vexmpp
+   :alt: Build Status
+.. image:: https://img.shields.io/pypi/l/vexmpp.svg
+   :target: https://pypi.python.org/pypi/vexmpp/
+   :alt: License
+.. image:: https://img.shields.io/pypi/pyversions/vexmpp.svg
+   :target: https://pypi.python.org/pypi/vexmpp/
+   :alt: Supported Python versions
+.. image:: https://coveralls.io/repos/nicfit/vexmpp/badge.svg
+   :target: https://coveralls.io/r/nicfit/vexmpp
+   :alt: Coverage Status
 
 Features
 --------
 
-* TODO
+* Free software: GNU GPL v3.0 license

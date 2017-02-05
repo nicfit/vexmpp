@@ -3,10 +3,18 @@ include CONTRIBUTING.rst
 include HISTORY.rst
 include LICENSE
 include README.rst
+include Makefile
+include tox.ini
 
-recursive-include tests *
-recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
+graft docs
+prune docs/_build
 
-recursive-include docs *.rst conf.py Makefile make.bat
+recursive-include ./tests *.py
+
+exclude .cookiecutter.yml
+exclude .gitchangelog.rc
+global-exclude __pycache__
+global-exclude .editorconfig
+global-exclude *.py[co]
+
 recursive-include requirements *.txt

@@ -1,9 +1,9 @@
+Release History
+===============
+
 .. :changelog:
 
-History
--------
+%%version%% (unreleased)
+-------------------------
 
-0.4.0-alpha (2015-01-11)
-------------------------------------------------------------
-
-* First release on PyPI.
+* Initial release
