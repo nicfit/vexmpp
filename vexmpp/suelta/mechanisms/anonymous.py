@@ -1,5 +1,4 @@
 from ..sasl import Mechanism, register_mechanism
-from ..exceptions import SASLError, SASLCancelled
 
 
 class ANONYMOUS(Mechanism):

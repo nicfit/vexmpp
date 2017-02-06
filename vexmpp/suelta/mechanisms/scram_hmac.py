@@ -1,11 +1,10 @@
-import sys
 import hmac
 import random
 from base64 import b64encode, b64decode
 
-from ..util import hash, bytes, num_to_bytes, bytes_to_num, XOR
+from ..util import hash, bytes, XOR
 from ..sasl import Mechanism, register_mechanism
-from ..exceptions import SASLError, SASLCancelled
+from ..exceptions import SASLCancelled
 
 
 def parse_challenge(challenge):

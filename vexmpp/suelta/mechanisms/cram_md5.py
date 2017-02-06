@@ -1,9 +1,8 @@
-import sys
 import hmac
 
 from ..util import hash, bytes
 from ..sasl import Mechanism, register_mechanism
-from ..exceptions import SASLError, SASLCancelled
+from ..exceptions import SASLCancelled
 
 
 class CRAM_MD5(Mechanism):

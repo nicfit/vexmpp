@@ -55,7 +55,7 @@ def set_stash_file(filename):
     SESSION['stash_file'] = filename
     try:
         import marshal
-        stash_file = file(filename)
+        stash_file = open(filename)
         SESSION['stash'] = marshal.load(stash_file)
     except:
         SESSION['stash'] = {}
@@ -178,9 +178,6 @@ class SASL(object):
         if self.testkey is None:
             return
 
-        testkey = self.testkey[:]
-        lockout = 1
-
     def find_username(self):
         """Find and return user's username if known."""
         return self.try_username
@@ -296,7 +293,7 @@ class Mechanism(object):
             SESSION['stash'][self.sasl.stash_id]['mech'] = self.name
             if SESSION['stash_file'] not in ['', None]:
                 import marshal
-                stash_file = file(SESSION['stash_file'], 'wb')
+                stash_file = open(SESSION['stash_file'], 'wb')
                 marshal.dump(SESSION['stash'], stash_file)
 
     def clear(self):

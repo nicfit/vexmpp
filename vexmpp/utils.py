@@ -107,7 +107,7 @@ def formatTime(seconds, total=None, short=False):
 
         if seconds < 60:
             return u'   {0:02d}s'.format(seconds)
-        for i in xrange(len(units) - 1):
+        for i in range(len(units) - 1):
             unit1, limit1 = units[i]
             unit2, limit2 = units[i + 1]
             if seconds >= limit1:
@@ -162,9 +162,12 @@ def xpathFilter(xpaths):
 
 
 _dns_cache = {}
+
+
 async def resolveHostPort(hostname, port, loop, use_cache=True, client_srv=True,
                           srv_records=None, srv_lookup=True):
     global _dns_cache
+
     def _chooseSrv(_srvs):
         # TODO: random choices based on prio/weight
         return random.choice(_srvs)

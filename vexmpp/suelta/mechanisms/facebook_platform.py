@@ -1,12 +1,6 @@
 from ..util import bytes
 from ..sasl import Mechanism, register_mechanism
 
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse
-
-
 
 class X_FACEBOOK_PLATFORM(Mechanism):
 
@@ -37,4 +31,5 @@ class X_FACEBOOK_PLATFORM(Mechanism):
         return True
 
 
-register_mechanism('X-FACEBOOK-PLATFORM', 40, X_FACEBOOK_PLATFORM, use_hashes=False)
+register_mechanism('X-FACEBOOK-PLATFORM', 40, X_FACEBOOK_PLATFORM,
+                   use_hashes=False)

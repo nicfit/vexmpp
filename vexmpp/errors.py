@@ -73,7 +73,7 @@ TYPE_WAIT = "wait"
 STANZA_ERRORS = (
     ("bad-request", TYPE_MODIFY, "", None),
     ("conflict", TYPE_CANCEL, "", None),
-    ("feture-not-implemented", TYPE_CANCEL, "", None),
+    ("feature-not-implemented", TYPE_CANCEL, "", None),
     ("forbidden", TYPE_AUTH, "", None),
     ("gone", TYPE_CANCEL, "", None),
     ("internal-server-error", TYPE_CANCEL, "", None),
@@ -327,4 +327,4 @@ def _makeConcreteError(xml):
     if stream_error:
         return Class(text=text, lang=lang, app_err=app_err)
     else:
-        return Class(type=type, text=text, lang=lang, app_err=app_err)
+        return Class(type=type_, text=text, lang=lang, app_err=app_err)

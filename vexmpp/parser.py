@@ -3,6 +3,7 @@ from xml.parsers import expat
 from lxml import etree
 from collections import deque
 
+from . import getLogger
 from .namespaces import STREAM_NS_URI, CLIENT_NS_URI, SERVER_NS_URI
 
 
@@ -155,5 +156,4 @@ class Parser(object):
                 self._curr.elem.text += data
 
 
-from . import getLogger
 log = getLogger(__name__)

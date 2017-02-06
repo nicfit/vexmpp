@@ -10,11 +10,13 @@ from collections import namedtuple
 from lxml import etree
 
 from .. import getLogger
-log = getLogger(__name__)
-
-from ..errors import *
+from ..errors import (BadRequestStanzaError, XmppError,
+                      PolicyViolationStanzaError,
+                      FeatureNotImplementedStanzaError)
 from ..protocols import xdata
 from ..stanzas import Iq
+
+log = getLogger(__name__)
 
 SI_NS_URI = "http://jabber.org/protocol/si"
 FT_NS_URI = "http://jabber.org/protocol/si/profile/file-transfer"
@@ -93,9 +95,9 @@ class File:
             # Missing sequences
             full_set = set(range(sequences[-1] + 1))
             if full_set.difference(self._seq_set):
-                raise FileTransferError("Not all data blocks received, missing "
-                                        "sequences {}".format(
-                                        full_set.difference(self._seq_set)))
+                raise FileTransferError(
+                    "Not all data blocks received, missing sequences {}"
+                    .format(full_set.difference(self._seq_set)))
 
         if self._data_size != self.info.size:
             raise FileTransferError("Not all bytes received, read {:d} bytes "
@@ -241,7 +243,7 @@ async def sendFile(stream, to_jid, filename, description=None, timeout=None):
     if file_info.md5:
         f.attrib["hash"] = file_info.md5
     if file_info.date:
-        f.attrib["date"] = date
+        f.attrib["date"] = file_info.date
     # TODO: ranges
 
     feat = si.appendChild("feature", FEATURE_NS_URI)
@@ -276,15 +278,14 @@ async def sendFile(stream, to_jid, filename, description=None, timeout=None):
     open_iq.query.attrib["stanza"] = "iq"
 
     try:
-        _ = await stream.sendAndWait(open_iq, raise_on_error=True,
-                                     timeout=timeout)
+        await stream.sendAndWait(open_iq, raise_on_error=True,
+                                 timeout=timeout)
         await sendFileCoro(stream, to_jid, path, sid, timeout=timeout)
-
     except XmppError as ex:
         raise FileTransferError(ex)
 
 
-### IBB ###
+# IBB ---------------------------------------------------------------------
 
 async def ibbSendFile(stream, to_jid, file_path, sid, block_size=BLOCK_SIZE,
                       timeout=None):
@@ -295,8 +296,7 @@ async def ibbSendFile(stream, to_jid, file_path, sid, block_size=BLOCK_SIZE,
     open_iq.query.attrib["block-size"] = str(block_size)
     open_iq.query.attrib["stanza"] = "iq"
 
-    _ = await stream.sendAndWait(open_iq, raise_on_error=True,
-                                 timeout=timeout)
+    await stream.sendAndWait(open_iq, raise_on_error=True, timeout=timeout)
 
     with file_path.open("rb") as fp:
         seq = 0
@@ -308,19 +308,16 @@ async def ibbSendFile(stream, to_jid, file_path, sid, block_size=BLOCK_SIZE,
             iq.query.attrib["sid"] = sid
             iq.query.attrib["seq"] = str(seq)
             iq.query.text = b64encode(data)
-            _ = await stream.sendAndWait(iq, raise_on_error=True,
-                                         timeout=timeout)
+            await stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
             seq += 1
 
     close_iq = Iq(to=to_jid, type="set", request=("close", IBB_NS_URI))
     close_iq.query.attrib["sid"] = sid
-    _ = await stream.sendAndWait(close_iq, raise_on_error=True,
-                                 timeout=timeout)
+    await stream.sendAndWait(close_iq, raise_on_error=True, timeout=timeout)
 
 
 async def ibbReceiveFile(stream, request, file_info, maxsize=None,
                          tempdir=None, timeout=None):
-
 
     open_elem = request.getChild("open", IBB_NS_URI)
     if open_elem is None:
@@ -337,9 +334,7 @@ async def ibbReceiveFile(stream, request, file_info, maxsize=None,
     elif stanza == "message":
         raise FeatureNotImplementedStanzaError("IBB via messages not supported")
 
-    seq = 0
     done = False
-    file_data = b""
     response = request.resultResponse()
     stream.send(response)
 

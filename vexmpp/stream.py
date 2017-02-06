@@ -157,8 +157,9 @@ class Stream(asyncio.Protocol):
                 hook = partial(m.onSend, self, stanza)
                 asyncio.ensure_future(self._runMixin(hook))
 
-    async def sendAndWaitIq(self, child_ns, to=None, child_name="query", type="get",
-                            raise_on_error=False, timeout=None, id_prefix=None):
+    async def sendAndWaitIq(self, child_ns, to=None, child_name="query",
+                            type="get", raise_on_error=False, timeout=None,
+                            id_prefix=None):
         iq = Iq(to=to, type=type, request=(child_name, child_ns),
                 id_prefix=id_prefix)
         resp = await self.sendAndWait(iq, raise_on_error=raise_on_error,
@@ -319,8 +320,10 @@ class Mixin(object):
 class StreamCallbacks:
     def connected(self, stream, tls_active):
         pass
+
     def disconnected(self, stream, reason):
         pass
+
     def streamError(self, stream, error):
         pass
 
@@ -344,4 +347,3 @@ class _StreamWaitFuture(asyncio.Future):
                 log.debug("Matched xpath {}".format((xp, nsmap)))
                 return True
         return False
-

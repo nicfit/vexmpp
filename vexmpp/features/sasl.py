@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import base64
 from lxml.etree import Element
+from nicfit import getLogger
 
 from .. import suelta
 from ..protocols.sasl import SaslError, NS_URI
@@ -25,7 +26,7 @@ async def handle(stream, feature_elem, timeout=None):
 
     def _secquery(mech, question):
         # FIXME: what is this?
-        #import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
         return True
 
     # This could be set to a desired mech. From a config, for example.
@@ -72,5 +73,4 @@ async def handle(stream, feature_elem, timeout=None):
             stream.send(auth)
 
 
-from .. import getLogger
 log = getLogger(__name__)

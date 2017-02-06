@@ -1,8 +1,6 @@
-import sys
-
 from ..util import bytes
 from ..sasl import Mechanism, register_mechanism
-from ..exceptions import SASLError, SASLCancelled
+from ..exceptions import SASLCancelled
 
 
 class PLAIN(Mechanism):

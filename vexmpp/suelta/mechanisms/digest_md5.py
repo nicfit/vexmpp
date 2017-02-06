@@ -1,11 +1,11 @@
 import sys
 
+import hmac
 import random
 
-from ..util import hash, bytes, quote
+from ..util import hash, bytes, quote, num_to_bytes, bytes_to_num
 from ..sasl import Mechanism, register_mechanism
-from ..exceptions import SASLError, SASLCancelled
-
+from ..exceptions import SASLCancelled
 
 
 def parse_challenge(stuff):
@@ -103,7 +103,6 @@ class DIGEST_MD5(Mechanism):
         mac.update(seqnum)
         mac.update(msg)
         return mac.digest()[:10] + b'\x00\x01' + seqnum
-
 
     def encode(self, text):
         """

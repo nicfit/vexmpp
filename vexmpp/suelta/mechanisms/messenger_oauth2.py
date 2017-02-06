@@ -14,4 +14,6 @@ class X_MESSENGER_OAUTH2(Mechanism):
     def okay(self):
         return True
 
-register_mechanism('X-MESSENGER-OAUTH2', 10, X_MESSENGER_OAUTH2, use_hashes=False)
+
+register_mechanism('X-MESSENGER-OAUTH2', 10, X_MESSENGER_OAUTH2,
+                   use_hashes=False)

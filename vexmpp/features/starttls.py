@@ -9,8 +9,6 @@ NS_URI = "urn:ietf:params:xml:ns:xmpp-tls"
 async def handle(stream, feature_elem, timeout=None):
     nsmap = {"tls": NS_URI}
 
-    required = isRequired(feature_elem)
-
     stream.send(Stanza("starttls", nsmap={None: NS_URI}))
     resp = await stream.wait([("/tls:proceed", nsmap),
                               ("/tls:failure", nsmap)], timeout=timeout)
@@ -26,4 +24,3 @@ async def handle(stream, feature_elem, timeout=None):
 
 def isRequired(feature_elem):
     return ("{%s}required" % NS_URI) in [c.tag for c in feature_elem]
-

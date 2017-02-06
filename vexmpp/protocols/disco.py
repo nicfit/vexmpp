@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
-from collections import UserDict
-
 from .. import stream
 from ..jid import Jid
 from ..stanzas import Iq, ElementWrapper
 from ..errors import XmppError
 from ..utils import xpathFilter
 
-'''XEP 30'''
+"""XEP 30"""
 
 from .. import getLogger
 log = getLogger(__name__)
 
-NS_URI_BASE  = "http://jabber.org/protocol/disco"
-NS_URI_INFO  = "{}#info".format(NS_URI_BASE)
+NS_URI_BASE = "http://jabber.org/protocol/disco"
+NS_URI_INFO = "{}#info".format(NS_URI_BASE)
 NS_URI_ITEMS = "{}#items".format(NS_URI_BASE)
 
 
@@ -149,7 +147,7 @@ class DiscoInfoMixin(stream.Mixin):
             ident.set("category", "client")
             ident.set("name", "Botch")
             ident.set("type", "bot")
-            _ = query.appendChild("feature").set("var", NS_URI_INFO)
+            query.appendChild("feature").set("var", NS_URI_INFO)
         else:
             # disco#items
             pass

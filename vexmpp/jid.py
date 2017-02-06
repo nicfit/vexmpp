@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from threading import Lock
 
 #
 # Portions of this code stolen from Twisted, their licence applies there.
@@ -6,6 +7,9 @@
 # Copyright (c) 2001-2005 Twisted Matrix Laboratories.
 # See LICENSE for details.
 #
+
+__internJIDs = {}
+__internJIDs_lock = Lock()
 
 
 class InvalidJidError(RuntimeError):
@@ -174,10 +178,6 @@ def _prep(user, host, resource):
 
     return (user, host, resource)
 
-
-__internJIDs = {}
-from threading import Lock
-__internJIDs_lock = Lock()
 
 def internJid(jidstring):
     """

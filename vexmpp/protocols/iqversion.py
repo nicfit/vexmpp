@@ -2,8 +2,7 @@
 import platform
 from lxml import etree
 
-from .. import __project_name__, __version__
-from ..stanzas import Iq
+from ..__about__ import __project_name__, __version__
 from ..stream import Mixin
 from ..utils import xpathFilter
 

@@ -17,9 +17,8 @@ The transport implementation is documented below:
 .. autoclass:: STARTTLSTransport(loop, rawsock, protocol, ssl_context, [waiter=None], [use_starttls=False], [post_handshake_callback=None], [peer_hostname=None], [server_hostname=None])
    :members:
 
-"""
+"""  # noqa
 
-import abc
 import asyncio
 import socket
 
@@ -32,16 +31,16 @@ logger = getLogger(__name__)
 
 
 class _State(Enum):
-    RAW_OPEN               = 0x0000
-    RAW_EOF_RECEIVED       = 0x0001
+    RAW_OPEN               = 0x0000  # noqa
+    RAW_EOF_RECEIVED       = 0x0001  # noqa
 
-    TLS_HANDSHAKING        = 0x0300
-    TLS_OPEN               = 0x0100
-    TLS_EOF_RECEIVED       = 0x0101
-    TLS_SHUTTING_DOWN      = 0x0102
-    TLS_SHUT_DOWN          = 0x0103
+    TLS_HANDSHAKING        = 0x0300  # noqa
+    TLS_OPEN               = 0x0100  # noqa
+    TLS_EOF_RECEIVED       = 0x0101  # noqa
+    TLS_SHUTTING_DOWN      = 0x0102  # noqa
+    TLS_SHUT_DOWN          = 0x0103  # noqa
 
-    CLOSED                 = 0x0003
+    CLOSED                 = 0x0003  # noqa
 
     @property
     def eof_received(self):
@@ -62,6 +61,7 @@ class _State(Enum):
     @property
     def is_open(self):
         return (self.value & 0x3) == 0
+
 
 class STARTTLSTransport(asyncio.Transport):
     """
@@ -229,7 +229,7 @@ class STARTTLSTransport(asyncio.Transport):
         """
         Clean up all resources and call the protocols connection lost method.
         """
-        self._state = _State.CLOSED;
+        self._state = _State.CLOSED
         try:
             self._protocol.connection_lost(exc)
         finally:
@@ -558,7 +558,7 @@ class STARTTLSTransport(asyncio.Transport):
         * ``peer_hostname``: The *peer_hostname* value passed to the constructor.
         * ``server_hostname``: The *server_hostname* value passed to the constructor.
 
-        """
+        """  # noqa
         return self._extra.get(name, default)
 
     async def starttls(self, ssl_context=None,
@@ -615,6 +615,7 @@ class STARTTLSTransport(asyncio.Transport):
         Writing the EOF has not been implemented, for the sake of simplicity.
         """
         raise NotImplementedError("Cannot write_eof() on STARTTLS transport")
+
 
 async def create_starttls_connection(
         loop,

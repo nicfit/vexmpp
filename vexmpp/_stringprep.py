@@ -41,7 +41,7 @@ class EmptyMappingTable:
 
 
 class Profile:
-    def __init__(self, mappings=[],  normalize=True, prohibiteds=[],
+    def __init__(self, mappings=[], normalize=True, prohibiteds=[],
                        check_unassigneds=True, check_bidi=True):
         self.mappings = mappings
         self.normalize = normalize
@@ -151,8 +151,8 @@ class NamePrep:
 
     def check_prohibiteds(self, string):
         for c in string:
-           if c in self.prohibiteds:
-               raise UnicodeError("Invalid character %s" % repr(c))
+            if c in self.prohibiteds:
+                raise UnicodeError("Invalid character %s" % repr(c))
 
     def nameprep(self, label):
         label = idna.nameprep(label)
@@ -185,7 +185,7 @@ nodeprep = Profile(mappings=[B_1, B_2],
                                 LookupTable([u'"', u'&', u"'", u'/',
                                              u':', u'<', u'>', u'@'])])
 
-resourceprep = Profile(mappings=[B_1,],
+resourceprep = Profile(mappings=[B_1],
                        prohibiteds=[C_12, C_21, C_22,
                                     C_3, C_4, C_5, C_6, C_7, C_8, C_9])
 

@@ -26,4 +26,3 @@ async def set(stream, to, vcard_xml, timeout=None):
     return iq
 
 # TODO: vCard builder
-

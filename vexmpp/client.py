@@ -13,10 +13,10 @@ from .ssl_transport import create_starttls_connection
 from .features import sasl, bind, starttls, stream_mgmt
 from .protocols import (resourcebind, iqroster, presence, iqversion,
                         entity_time, disco, iqregister, muc)
+from . import getLogger
 
 DEFAULT_C2S_PORT = 5222
 
-from . import getLogger
 log = getLogger(__name__)
 
 
@@ -58,8 +58,8 @@ class ClientStream(Stream):
         # Reopen stream
         self._parser_task.reset()
         self.send(StreamHeader(ns=CLIENT_NS_URI, to=self.creds.jid.host))
-        # Server <stream:stream>
-        header = await self.wait(StreamHeader.XPATH, timeout)
+        # Server sends header <stream:stream>
+        await self.wait(StreamHeader.XPATH, timeout)
         # Server stream:features
         features = await self.wait(StreamFeatures.XPATH, timeout)
 
@@ -71,7 +71,7 @@ class ClientStream(Stream):
         self.send(stream_stream)
 
         # Server <stream:stream>
-        _ = await self.wait(StreamHeader.XPATH, timeout)
+        await self.wait(StreamHeader.XPATH, timeout)
 
         # Server stream:features
         features = await self.wait(StreamFeatures.XPATH, timeout)
@@ -97,7 +97,7 @@ class ClientStream(Stream):
             reg_form.type = "set"
             reg_form.swapToFrom()
             reg_form.setId()
-            _ = await self.sendAndWait(reg_form, timeout=timeout)
+            await self.sendAndWait(reg_form, timeout=timeout)
 
         # SASL auth
         mechs_elem = features.getFeature("mechanisms", sasl.NS_URI)
@@ -139,21 +139,22 @@ class ClientStream(Stream):
                               if "state_callbacks" in stream_kwargs else None
         signalEvent(state_callbacks, "connecting", peer[0], peer[1])
 
-        # FIXME
         def _sslContext():
             from OpenSSL.SSL import (Context, SSLv23_METHOD, OP_NO_SSLv2,
                                      OP_NO_SSLv3, VERIFY_PEER)
             ssl_ctx = Context(SSLv23_METHOD)
             ssl_ctx.set_options(OP_NO_SSLv2 | OP_NO_SSLv3)
+
             def _verifyPeerCb(ctx, x509, errno, errdepth, returncode):
+                # FIXME: VERIFY!!!
                 print("errno: %s" % errno)
                 print("returncode: %s" % returncode)
                 print("errdepth: %s" % errdepth)
                 print("x509: %s" % x509)
                 print("ctx: %s" % ctx)
-                #import ipdb; ipdb.set_trace()
                 return True
-            #ssl_ctx.set_verify(VERIFY_PEER, _verifyPeerCb)
+
+            ssl_ctx.set_verify(VERIFY_PEER, _verifyPeerCb)
             return ssl_ctx
 
         if "mixins" not in stream_kwargs or stream_kwargs["mixins"] is None:
@@ -169,7 +170,7 @@ class ClientStream(Stream):
         try:
             connected = False
             (transport,
-             stream) =  await asyncio.wait_for(conn, timeout)
+             stream) = await asyncio.wait_for(conn, timeout)
 
             connected = True
             peer = transport.get_extra_info("peername")
@@ -208,7 +209,9 @@ class ClientStream(Stream):
 class ClientStreamCallbacks(StreamCallbacks):
     def connecting(self, host, port):
         pass
+
     def connectionFailed(self, host, port):
         pass
+
     def sessionStarted(self, stream):
         pass

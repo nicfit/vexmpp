@@ -18,9 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from .saslprep import saslprep
-from .sasl import *
-from .mechanisms import *
+from .saslprep import saslprep  # noqa
+from .sasl import *  # noqa
+from .mechanisms import *  # noqa
 
 __version__ = '2.0'
 __version_info__ = (2, 0, 0)

@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from lxml import etree
-
 from .. import stream
 from ..utils import xpathFilter
 from ..jid import Jid as BaseJid
@@ -16,10 +14,10 @@ log = getLogger(__name__)
 
 NS_URI = "http://jabber.org/protocol/muc"
 JINC_NS_URI = "http://www.jabber.com/protocol/muc"
-NS_URI_ADMIN = "%s#admin"  % NS_URI
-NS_URI_OWNER = "%s#owner"  % NS_URI
+NS_URI_ADMIN = "%s#admin" % NS_URI
+NS_URI_OWNER = "%s#owner" % NS_URI
 NS_URI_UNIQUE = "%s#unique" % NS_URI
-NS_URI_USER = "%s#user"   % NS_URI
+NS_URI_USER = "%s#user" % NS_URI
 JINC_NS_URI_HISTORY = "%s#history" % JINC_NS_URI
 NS_CONFERENCE_URI = "jabber:x:conference"
 
@@ -73,7 +71,6 @@ class RosterItem:
             self.role = _itemGet(item_elem, "role")
             jid = _itemGet(item_elem, "jid")
             self.jid = BaseJid(jid) if jid else None
-
 
     def __str__(self):
         return ("RosterItem [nickname: {nickname}, jid: {jid}, "
@@ -214,7 +211,8 @@ async def kick(stream, nick_jid, reason, timeout=None):
     item.set("role", "none")
     query.appendChild("reason").text = reason
 
-    _ = await stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
+    await stream.sendAndWait(iq, raise_on_error=True, timeout=timeout)
+
 
 async def leaveRoom(stream, nick_jid, leave_msg=None, timeout=None):
     pres = Presence(to=nick_jid, type=Presence.TYPE_UNAVAILABLE)

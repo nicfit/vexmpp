@@ -85,7 +85,7 @@ class ElementWrapper:
         child = self.xml.find("{%s}%s" % (ns, name))
         return child
 
-    ##### etree Element interface begin #####
+    # ----- etree Element interface begin -----
     def find(self, *args, **kwargs):
         e = self.xml.find(*args, **kwargs)
         return ElementWrapper(e) if e is not None else None
@@ -99,9 +99,6 @@ class ElementWrapper:
             else:
                 retval.append(ElementWrapper(m))
         return retval
-
-
-        return [ElementWrapper(e) for e in xpaths]
 
     def get(self, key, default=None, as_jid=False):
         value = self.xml.get(key, default=default)
@@ -161,7 +158,7 @@ class ElementWrapper:
     def getchildren(self):
         return self.xml.getchildren()
 
-    ##### etree Element interface end #####
+    # ----- etree Element interface end -----
 
     @staticmethod
     def _makeTagName(tag, ns):

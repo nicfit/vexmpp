@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 APIs for dealing with Jabber rosters; ``jabber:iq:roster``
 http://xmpp.org/rfcs/rfc6121.html#roster
-'''
+"""
 from lxml import etree
 from ..stanzas import Iq
 from ..stream import Mixin
@@ -47,7 +47,7 @@ async def remove(stream, jid, timeout=None):
 
 class RosterItem(object):
     SUB_NONE = "none"
-    SUB_TO   = "to"
+    SUB_TO = "to"
     SUB_FROM = "from"
     SUB_BOTH = "both"
 

@@ -113,7 +113,7 @@ else:
               package_data={},
               entry_points={
                   "console_scripts": [
-                      "vexmpp = vexmpp.__main__:app.run",
+                      "vex = vexmpp.vex.__main__:app.run",
                   ]
               },
               **pkg_info

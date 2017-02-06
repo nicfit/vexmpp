@@ -64,17 +64,22 @@ class DenySubscriptionAckMixin(Mixin):
 def subscribe(stream, jid, status=None):
     stream.send(Presence(to=jid, type=Presence.TYPE_SUBSCRIBE, status=status))
 
+
 def unsubscribe(stream, jid):
     stream.send(Presence(to=jid, type=Presence.TYPE_UNSUBSCRIBE))
+
 
 def authorize(stream, jid):
     stream.send(Presence(to=jid, type=Presence.TYPE_SUBSCRIBED))
 
+
 def subscribed(stream, jid):
     stream.send(Presence(to=jid, type=Presence.TYPE_SUBSCRIBED))
 
+
 def deauthorize(stream, jid):
     stream.send(Presence(to=jid, type=Presence.TYPE_UNSUBSCRIBED))
+
 
 def unsubscribed(stream, jid):
     stream.send(Presence(to=jid, type=Presence.TYPE_UNSUBSCRIBED))
@@ -175,9 +180,9 @@ class DataEvent(asyncio.Event):
         super().set()
 
     def clear(self):
-        self._data= None
+        self._data = None
         super().clear()
 
     async def wait(self):
-        _ = await super().wait()
+        await super().wait()
         return self._data
