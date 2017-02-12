@@ -1,3 +1,5 @@
+.cookiecutter.md5
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -50,7 +52,6 @@ htmlcov
 
 # Translations
 *.mo
-*.pot
 
 # Django stuff:
 *.log

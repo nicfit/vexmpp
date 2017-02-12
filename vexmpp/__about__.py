@@ -7,6 +7,7 @@ __years__ = "2014-2017"
 
 __project_name__ = "vexmpp"
 __project_slug__ = "vexmpp"
+__pypi_name__ = "vexmpp"
 __author__ = "Travis Shirk"
 __author_email__ = "travis@pobox.com"
 __url__ = "https://github.com/nicfit/vexmpp"

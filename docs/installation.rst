@@ -22,9 +22,11 @@ At the command line:
     $ tar zxf vexmpp-|version|.tar.gz
     $ cd vexmpp-|version|
     $ python setup.py install
+
 From GitHub
 --------------
 At the command line::
+
     $ git clone https://github.com/nicfit/vexmpp
     $ cd mishmash
     $ python setup.py install

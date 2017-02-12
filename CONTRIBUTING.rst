@@ -56,10 +56,10 @@ If you are proposing a feature:
 Get Started!
 ------------
 
-Ready to contribute? Here's how to set up `{{ cookiecutter.github_repo }}` for
+Ready to contribute? Here's how to set up vexmpp for
 local development.
 
-1. Fork the `{{ cookiecutter.github_repo }}` repo on GitHub.
+1. Fork the `vexmpp` repo on GitHub.
 2. Clone your fork locally::
 
     $ git clone git@github.com:your_name_here/vexmpp.git

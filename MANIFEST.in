@@ -18,3 +18,4 @@ global-exclude .editorconfig
 global-exclude *.py[co]
 
 recursive-include requirements *.txt
+

@@ -2,7 +2,7 @@
         docs clean-docs lint tags docs-dist docs-view coverage-view changelog \
         clean-pyc clean-build clean-patch clean-local clean-test-data \
         test-all test-data build-release freeze-release tag-release \
-        pypi-release web-release github-release
+        pypi-release web-release github-release cookiecutter
 SRC_DIRS = ./vexmpp
 TEST_DIR = ./tests
 TEMP_DIR ?= ./tmp
@@ -43,6 +43,8 @@ help:
 	@echo "Options:"
 	@echo "TEST_PDB - If defined PDB options are added when 'pytest' is invoked"
 	@echo "BROWSER - HTML viewer used by docs-view/coverage-view"
+	@echo "CC_MERGE - Set to no to disable cookiecutter merging."
+	@echo "CC_OPTS - OVerrided the default options (--no-input) with your own."
 
 build:
 	python setup.py build
@@ -69,7 +71,7 @@ clean-pyc:
 clean-test:
 	rm -fr .tox/
 	rm -f .coverage
-	rm -rf ${CC_DIR}
+	rm -rf "${CC_DIR}"
 
 clean-patch:
 	find . -name '*.rej' -exec rm -f '{}' \;
@@ -79,17 +81,14 @@ lint:
 	flake8 $(SRC_DIRS)
 
 _PYTEST_OPTS=
-
 ifdef TEST_PDB
     _PDB_OPTS=--pdb -s
 endif
-
 test:
 	pytest $(_PYTEST_OPTS) $(_PDB_OPTS) ${TEST_DIR}
 
 test-all:
 	tox
-
 
 coverage:
 	pytest --cov=./vexmpp \
@@ -123,8 +122,6 @@ servedocs: docs
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 pre-release: lint test changelog
-	@test -n "${GITHUB_USER}" || (echo "GITHUB_USER not set, needed for github" && false)
-	@test -n "${GITHUB_TOKEN}" || (echo "GITHUB_TOKEN not set, needed for github" && false)
 	@echo "VERSION: $(VERSION)"
 	$(eval RELEASE_TAG = v${VERSION})
 	@echo "RELEASE_TAG: $(RELEASE_TAG)"
@@ -139,6 +136,8 @@ pre-release: lint test changelog
 		echo "Checking $$auth...";\
 		grep "$$auth" AUTHORS.rst || echo "* $$auth" >> AUTHORS.rst;\
 	done
+	@test -n "${GITHUB_USER}" || (echo "GITHUB_USER not set, needed for github" && false)
+	@test -n "${GITHUB_TOKEN}" || (echo "GITHUB_TOKEN not set, needed for github" && false)
 	@github-release --version    # Just a exe existence check
 
 changelog:
@@ -146,7 +145,7 @@ changelog:
 	if ! grep "${CHANGELOG_HEADER}" ${CHANGELOG} > /dev/null; then \
 		rm -f ${CHANGELOG}.new; \
 		if test -n "$$last"; then \
-			gitchangelog show --author-format=email ^$${last} |\
+			gitchangelog show --author-format=email $${last}..HEAD |\
 			  sed "s|^%%version%% .*|${CHANGELOG_HEADER}|" |\
 			  sed '/^.. :changelog:/ r/dev/stdin' ${CHANGELOG} \
 			 > ${CHANGELOG}.new; \
@@ -172,7 +171,6 @@ tag-release:
 
 release: pre-release freeze-release build-release tag-release upload-release
 
-
 github-release:
 	name="${RELEASE_TAG}"; \
     if test -n "${RELEASE_NAME}"; then \
@@ -193,30 +191,25 @@ github-release:
                    --tag ${RELEASE_TAG} --name $${file} --file dist/$${file}; \
     done
 
-
 web-release:
-	# TODO
-	#find dist -type f -exec scp register -r ${PYPI_REPO} {} \;
-	# Not implemented
-	true
-
+	@# Not implemented
+	@true
 
 upload-release: github-release pypi-release web-release
-
 
 pypi-release:
 	find dist -type f -exec twine register -r ${PYPI_REPO} {} \;
 	find dist -type f -exec twine upload -r ${PYPI_REPO} --skip-existing {} \;
 
-dist: clean docs-dist build
+dist: clean build docs-dist
 	python setup.py sdist --formats=gztar,zip
 	python setup.py bdist_egg
 	python setup.py bdist_wheel
 	@# The cd dist keeps the dist/ prefix out of the md5sum files
 	cd dist && \
-    for f in $$(ls); do \
-        md5sum $${f} > $${f}.md5; \
-    done
+	for f in $$(ls); do \
+		md5sum $${f} > $${f}.md5; \
+	done
 	ls -l dist
 
 install: clean
@@ -231,19 +224,16 @@ README.html: README.rst
 		${BROWSER} README.html;\
 	fi
 
-CC_DIFF ?= gvimdiff -geometry 169x60 -f
+CC_MERGE ?= yes
+CC_OPTS ?= --no-input
 GIT_COMMIT_HOOK = .git/hooks/commit-msg
 cookiecutter:
-	rm -rf ${CC_DIR}
-	if test "${CC_DIFF}" == "no"; then \
-		nicfit cookiecutter --no-input ${TEMP_DIR}; \
-		git -C ${CC_DIR} diff; \
-		git -C ${CC_DIR} status -s -b; \
+	rm -rf "${CC_DIR}"
+	if test "${CC_MERGE}" == "no"; then \
+		nicfit cookiecutter ${CC_OPTS} "${TEMP_DIR}"; \
+		git -C "${CC_DIR}" diff; \
+		git -C "${CC_DIR}" status -s -b; \
 	else \
-		nicfit cookiecutter --merge --no-input ${TEMP_DIR}; \
-		if test ! -f ${GIT_COMMIT_HOOK}; then \
-			touch ${GIT_COMMIT_HOOK}; \
-		fi; \
-		diff ${CC_DIR}/${GIT_COMMIT_HOOK} ${GIT_COMMIT_HOOK} >/dev/null || \
-		     ${CC_DIFF} ${CC_DIR}/${GIT_COMMIT_HOOK} ${GIT_COMMIT_HOOK}; \
+		nicfit cookiecutter --merge ${CC_OPTS} "${TEMP_DIR}" \
+		       --extra-merge ${GIT_COMMIT_HOOK} ${GIT_COMMIT_HOOK};\
 	fi
