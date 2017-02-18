@@ -1,4 +1,4 @@
 pytest
 pytest-cov
-pytest-runner
+pytest-runner==2.11.1
 nose
