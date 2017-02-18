@@ -1,4 +1,4 @@
-cogapp
+cogapp==2.5.1
 Sphinx==1.5.2
 sphinxcontrib-bitbucket
 sphinxcontrib-paverutils
