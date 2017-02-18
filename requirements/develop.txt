@@ -1,8 +1,0 @@
-bumpversion
-wheel
-watchdog
-tox
-flake8
-coverage
-paver
-
