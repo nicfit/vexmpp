@@ -4,5 +4,5 @@ watchdog==0.8.3
 tox==2.6.0
 flake8==3.3.0
 coverage==4.3.4
-paver
+paver==1.2.4
 
