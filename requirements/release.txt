@@ -1,6 +1,6 @@
-cogapp
-Sphinx
-sphinxcontrib-bitbucket
-sphinxcontrib-paverutils
+cogapp==2.5.1
+Sphinx==1.5.2
+sphinxcontrib-bitbucket==1.0
+sphinxcontrib-paverutils==1.16.0
 
 
