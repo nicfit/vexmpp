@@ -1,5 +1,5 @@
 cogapp
-Sphinx
+Sphinx==1.5.2
 sphinxcontrib-bitbucket
 sphinxcontrib-paverutils
 
