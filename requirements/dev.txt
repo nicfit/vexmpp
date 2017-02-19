@@ -2,7 +2,7 @@ wheel
 watchdog
 tox==2.6.0
 flake8
-twine
+twine==1.8.1
 Sphinx
 check-manifest==0.35
 #gitchangelog
