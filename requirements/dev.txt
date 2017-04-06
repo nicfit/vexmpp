@@ -1,6 +1,6 @@
 wheel
 watchdog
-tox==2.6.0
+tox==2.7.0
 flake8==3.3.0
 twine==1.8.1
 Sphinx==1.5.3
