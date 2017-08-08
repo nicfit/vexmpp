@@ -14,7 +14,7 @@ default_context:
     license: "GNU GPL v3.0"
     project_long_description: ""
     project_name: "vexmpp"
-    project_short_description: "Project description"
+    project_short_description: "XMPP library for Python3 asyncio."
     project_slug: "vexmpp"
     py26: "no"
     py27: "no"
