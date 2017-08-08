@@ -1,4 +1,4 @@
-PyOpenSSL
+PyOpenSSL==17.2.0
 aiodns
 lxml
 nicfit.py
