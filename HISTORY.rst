@@ -3,7 +3,7 @@ Release History
 
 .. :changelog:
 
-v0.1.1 (2017-08-08) : Back with a vengeance, we won't take your shit no more.
------------------------------------------------------------------------------
+v0.1.2 (2017-08-08) : Possessed
+-------------------------------
 
 * Initial release

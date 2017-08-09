@@ -14,8 +14,8 @@ def __parse_version(v):                                       # pragma: nocover
     return ver, rel, ver_info
 
 
-__version__ = "0.1.1"
-__release_name__ = "Back with a vengeance, we won't take your shit no more."
+__version__ = "0.1.2"
+__release_name__ = "Possessed"
 __years__ = "2014-2017"
 
 _, __release__, __version_info__ = __parse_version(__version__)
