@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from collections import namedtuple
 
 
@@ -15,8 +14,8 @@ def __parse_version(v):                                       # pragma: nocover
     return ver, rel, ver_info
 
 
-__version__ = "0.1.0"
-__release_name__ = ""
+__version__ = "0.1.2"
+__release_name__ = "Possessed"
 __years__ = "2014-2017"
 
 _, __release__, __version_info__ = __parse_version(__version__)
@@ -26,7 +25,7 @@ __pypi_name__ = "vexmpp"
 __author__ = "Travis Shirk"
 __author_email__ = "travis@pobox.com"
 __url__ = "https://github.com/nicfit/vexmpp"
-__description__ = "Project description"
+__description__ = "XMPP library for Python3 asyncio."
 __long_description__ = ""
 __license__ = "GNU GPL v3.0"
 __github_url__ = "https://github.com/nicfit/vexmpp",

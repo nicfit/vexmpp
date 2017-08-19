@@ -20,3 +20,5 @@ global-exclude *.py[co]
 include requirements.txt
 recursive-include requirements *.txt *.yml
 
+exclude TODO
+prune scripts
