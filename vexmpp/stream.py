@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import asyncio
 import logging
@@ -64,7 +63,7 @@ class ParserTask(asyncio.Task):
 
 
 class Stream(asyncio.Protocol):
-    '''Base class for XMPP streams.'''
+    """Base class for XMPP streams."""
 
     def __init__(self, creds, state_callbacks=None, mixins=None,
                  default_timeout=None):
@@ -117,13 +116,13 @@ class Stream(asyncio.Protocol):
             self._transport.close()
 
     def send(self, data):
-        '''Send ``data`` which can be a vexmpp.stanza.Stanza,
+        """Send ``data`` which can be a vexmpp.stanza.Stanza,
          lxml.etree.Element, a str, or bytes. The the case of bytes the
          encoding MUST be utf-8 encoded (per XMPP specification).
 
          In the case of Stanza and Element the Mixin.onSend callback is
          invoked. Currently there is not a Mixin callback for strings or bytes.
-        '''
+        """
         def _send(bytes_):
             if not self._transport:
                 log.warn("Data send with disconnected transport")
@@ -183,10 +182,10 @@ class Stream(asyncio.Protocol):
         raise NotImplementedError()
 
     async def wait(self, xpaths, timeout=None):
-        '''``xpaths`` is a 2-tuple of the form (xpath, nsmap), or a list of
+        """``xpaths`` is a 2-tuple of the form (xpath, nsmap), or a list of
         the same tuples to wait on a choice of matches. The first matched
         stanza is returned. Passing a ``timeout`` argument will raise a
-        asyncio.TimeoutError if not matches are found.'''
+        asyncio.TimeoutError if not matches are found."""
         global stream_wait_met
 
         if not isinstance(xpaths, list):
@@ -201,7 +200,7 @@ class Stream(asyncio.Protocol):
 
         fut = _StreamWaitFuture(xpaths)
 
-        # Run thru queue. Note, once a tasklet has seen it stanza it is skip
+        # Run thru queue. Note, once a tasklet has seen a stanza it is skipped
         # by _StreamWaitFuture.matchStanza
         for queued_stanza in self._stanza_queue:
             matched = fut.matchStanza(queued_stanza)
@@ -254,7 +253,7 @@ class Stream(asyncio.Protocol):
 
         if self._waiter_futures:
             for queued_stanza in self._stanza_queue:
-                for fut in list(self._waiter_futures):
+                for fut in [f for f in self._waiter_futures if not f.done()]:
                     matched = fut.matchStanza(queued_stanza)
                     if matched:
                         # XXX: How useful is this since _stanza_queue?
@@ -293,27 +292,27 @@ class Stream(asyncio.Protocol):
 
 class Mixin(object):
     def __init__(self, export_tuples=None):
-        '''
+        """
         ``export_tuples`` is a list of 2-tuples (name, obj) that added to the
         stream object's __dict__, as in __dict__[name] = obj.  By default no
         values are exported.
-        '''
+        """
         self._exports = export_tuples if export_tuples else []
 
     async def postSession(self, stream):
-        '''Called after stream negotiation and session creation.'''
+        """Called after stream negotiation and session creation."""
         pass
 
     async def onStanza(self, stream, stanza):
-        '''Called for each incoming Stanza.
+        """Called for each incoming Stanza.
 
         See :func:`vexmpp.utils.xpathFilter` for a decorator that can filter
         only the stanzas the implementation is interested in.
-        '''
+        """
         pass
 
     async def onSend(self, stream, stanza):
-        '''Called for each outgoing stanza.'''
+        """Called for each outgoing stanza."""
         pass
 
 
@@ -335,6 +334,8 @@ class _StreamWaitFuture(asyncio.Future):
         self._task = asyncio.Task.current_task()
 
     def matchStanza(self, queued_stanza):
+        log.debug(f"MatchStanza: {queued_stanza.stanza.toXml()} xpaths: "
+                  "{0} - @{1}".format(self._xpaths, id(self._task)))
         if self._task in queued_stanza.task_set:
             # seen this...
             return False
@@ -342,8 +343,11 @@ class _StreamWaitFuture(asyncio.Future):
 
         stanza = queued_stanza.stanza
         for xp, nsmap in self._xpaths:
+            log.debug("MatchStanza: Testing xpath {} against stanza {}"
+                      .format((xp, nsmap), stanza.toXml()))
             if stanza.xml.xpath(xp, namespaces=nsmap):
+                log.debug("MatchStanza: matched")
                 self.set_result(stanza)
-                log.debug("Matched xpath {}".format((xp, nsmap)))
                 return True
+        log.debug("MatchStanza: NOT matched")
         return False

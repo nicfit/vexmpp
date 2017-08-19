@@ -2,7 +2,7 @@
 vexmpp
 ======
 
-XMPP for Python3
+XMPP library for Python3 asyncio.
 
 Status
 ------

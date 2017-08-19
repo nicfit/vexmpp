@@ -1,0 +1,27 @@
+main:
+    - PyOpenSSL
+    - lxml
+    - aiodns
+    - nicfit.py
+
+#extra_example:
+#    - pkg
+#    - pkg2
+
+test:
+    - pytest
+    - pytest-cov
+    - pytest-runner
+    - nose
+
+dev:
+    - Sphinx
+    - check-manifest
+    - flake8
+    - git+https://github.com/nicfit/gitchangelog.git
+    - ipdb
+    - pip-tools
+    - tox
+    - twine
+    - wheel
+    - nicfit.py[cookiecutter]

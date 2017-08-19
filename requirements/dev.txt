@@ -1,10 +1,13 @@
-wheel
-watchdog
 tox==2.7.0
 flake8==3.3.0
 twine==1.8.1
 Sphinx==1.6.3
 check-manifest==0.35
-#gitchangelog
+flake8==3.3.0
 git+https://github.com/nicfit/gitchangelog.git
-ipdb==0.10.2
+ipdb==0.10.3
+nicfit.py[cookiecutter]
+pip-tools
+tox==2.7.0
+twine==1.9.1
+wheel
