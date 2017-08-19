@@ -12,7 +12,6 @@ test:
     - pytest
     - pytest-cov
     - pytest-runner
-    - nose
 
 dev:
     - Sphinx
@@ -25,3 +24,4 @@ dev:
     - twine
     - wheel
     - nicfit.py[cookiecutter]
+    - PyYaml
