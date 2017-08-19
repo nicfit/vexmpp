@@ -1,4 +1,7 @@
-Sphinx==1.5.5
+tox==2.7.0
+flake8==3.3.0
+twine==1.8.1
+Sphinx==1.6.3
 check-manifest==0.35
 flake8==3.3.0
 git+https://github.com/nicfit/gitchangelog.git
