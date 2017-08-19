@@ -1,6 +1,6 @@
 tox==2.7.0
 flake8==3.3.0
-twine==1.8.1
+twine==1.9.1
 Sphinx==1.6.3
 check-manifest==0.35
 flake8==3.3.0
