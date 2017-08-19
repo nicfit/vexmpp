@@ -1,6 +1,6 @@
 TODO
 ----
-- make raise_on_error deafult to True
+- make raise_on_error default to True
 - tests resolveHostPort caching
 - Iq request  -> query., maybe get fancier
 
@@ -8,7 +8,7 @@ TODO
    - Descriptors instead of property for ElementWrapper _*etAttr and
      _*etChildText
    - Respond to disco#info
-       - Disco support... particularly when a mixin is constructed and added to 
+       - Disco support... particularly when a mixin is constructed and added to
          a stream the streams DiscoMixin/map should be updated to reflect that
          the new mixin is suported (jabber:iq:version, etc.)
    - Respond to version
@@ -30,7 +30,7 @@ TODO
 - Meh
    - jabber:iq:auth via stream:feature (not legacy)
    - Ability to do TLS with immediate handshake (443, 5223, etc.)
-          
+
 
 Public Servers
 ---------------
