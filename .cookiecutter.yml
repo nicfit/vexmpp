@@ -11,7 +11,7 @@ default_context:
     github_url: "https://github.com/nicfit/vexmpp"
     github_username: "nicfit"
     intended_audience: "Developers"
-    license: "GNU GPL v3.0"
+    license: "MIT"
     project_long_description: ""
     project_name: "vexmpp"
     project_short_description: "XMPP library for Python3 asyncio."

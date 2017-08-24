@@ -28,4 +28,4 @@ Status
 Features
 --------
 
-* Free software: GNU GPL v3.0 license
+* Free software: MIT license

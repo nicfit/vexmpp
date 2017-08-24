@@ -27,7 +27,7 @@ __author_email__ = "travis@pobox.com"
 __url__ = "https://github.com/nicfit/vexmpp"
 __description__ = "XMPP library for Python3 asyncio."
 __long_description__ = ""
-__license__ = "GNU GPL v3.0"
+__license__ = "MIT"
 __github_url__ = "https://github.com/nicfit/vexmpp",
 __version_txt__ = """
 %(__name__)s %(__version__)s (C) Copyright %(__years__)s %(__author__)s
