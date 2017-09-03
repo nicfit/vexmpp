@@ -10,7 +10,7 @@ cffi==1.10.0              # via cryptography
 cryptography==2.0.3       # via pyopenssl
 idna==2.6                 # via cryptography
 lxml==3.8.0
-nicfit.py==0.6.2
+nicfit.py==0.6.3
 pycares==2.3.0            # via aiodns
 pycparser==2.18           # via cffi
 pyopenssl==17.2.0
