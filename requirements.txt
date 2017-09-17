@@ -14,4 +14,4 @@ nicfit.py==0.6.3
 pycares==2.3.0            # via aiodns
 pycparser==2.18           # via cffi
 pyopenssl==17.2.0
-six==1.10.0               # via cryptography, pyopenssl
+six==1.11.0               # via cryptography, pyopenssl
