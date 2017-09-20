@@ -33,9 +33,8 @@ class TlsOpts(Enum):
         raise ValueError("Invalid TLS option: {}".format(s))
 
 
-class Credentials(object):
+class Credentials:
     '''Client credentials, e.g. a user JID and password.'''
-
     def __init__(self, jid, password):
         if isinstance(jid, str):
             jid = Jid(jid)
@@ -126,9 +125,11 @@ class ClientStream(Stream):
     async def connect(Class, creds, host=None, port=DEFAULT_C2S_PORT,
                 loop=None, timeout=None,
                 **stream_kwargs):
-        '''Connect and negotiate a stream with the server. The connected stream
-        is returned.'''
+        """Connect and negotiate a stream with the server.
+         The connected stream is returned."""
         loop = loop or asyncio.get_event_loop()
+        if type(creds) is tuple:
+            creds = Credentials(*creds)
         (host,
          port) = await resolveHostPort(host if host else creds.jid.host,
                                             port, loop)
@@ -147,11 +148,11 @@ class ClientStream(Stream):
 
             def _verifyPeerCb(ctx, x509, errno, errdepth, returncode):
                 # FIXME: VERIFY!!!
-                print("errno: %s" % errno)
-                print("returncode: %s" % returncode)
-                print("errdepth: %s" % errdepth)
-                print("x509: %s" % x509)
-                print("ctx: %s" % ctx)
+                #print("errno: %s" % errno)
+                #print("returncode: %s" % returncode)
+                #print("errdepth: %s" % errdepth)
+                #print("x509: %s" % x509)
+                #print("ctx: %s" % ctx)
                 return True
 
             ssl_ctx.set_verify(VERIFY_PEER, _verifyPeerCb)
