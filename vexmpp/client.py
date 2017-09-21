@@ -148,11 +148,13 @@ class ClientStream(Stream):
 
             def _verifyPeerCb(ctx, x509, errno, errdepth, returncode):
                 # FIXME: VERIFY!!!
-                #print("errno: %s" % errno)
-                #print("returncode: %s" % returncode)
-                #print("errdepth: %s" % errdepth)
-                #print("x509: %s" % x509)
-                #print("ctx: %s" % ctx)
+                '''
+                print("errno: %s" % errno)
+                print("returncode: %s" % returncode)
+                print("errdepth: %s" % errdepth)
+                print("x509: %s" % x509)
+                print("ctx: %s" % ctx)
+                '''
                 return True
 
             ssl_ctx.set_verify(VERIFY_PEER, _verifyPeerCb)
