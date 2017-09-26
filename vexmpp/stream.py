@@ -58,6 +58,8 @@ class ParserTask(asyncio.Task):
                         log.verbose("[STANZA IN]:\n%s" %
                                     stanza.toXml(pprint=True).decode("utf-8"))
                     await self._stream._handleStanza(stanza)
+            except asyncio.CancelledError:
+                pass
             except Exception as ex:
                 log.exception(ex)
 
@@ -114,6 +116,7 @@ class Stream(asyncio.Protocol):
         if self.connected:
             self.send(b"</stream:stream>")
             self._transport.close()
+        self._parser_task.cancel()
 
     def send(self, data):
         """Send ``data`` which can be a vexmpp.stanza.Stanza,
