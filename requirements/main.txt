@@ -1,4 +1,4 @@
-PyOpenSSL==17.2.0
+PyOpenSSL==17.3.0
 aiodns
 lxml==4.0.0
 nicfit.py==0.6.3
