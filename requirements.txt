@@ -11,7 +11,7 @@ cryptography==2.1.4       # via pyopenssl
 deprecation==1.0.1        # via nicfit.py
 idna==2.6                 # via cryptography
 lxml==4.1.1
-nicfit.py==0.6.6
+nicfit.py==0.8.2
 pycares==2.3.0            # via aiodns
 pycparser==2.18           # via cffi
 pyopenssl==17.5.0
