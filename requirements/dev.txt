@@ -1,4 +1,4 @@
-PyYaml==3.12
+PyYaml==5.1.1
 Sphinx==1.6.5
 check-manifest==0.37
 flake8==3.5.0
