@@ -5,7 +5,7 @@
 #    pip-compile --output-file ./requirements.txt requirements.txt
 #
 aiodns==1.1.1
-asn1crypto==0.24.0        # via cryptography
+asn1crypto==1.1.0        # via cryptography
 cffi==1.11.0              # via cryptography
 cryptography==2.5       # via pyopenssl
 deprecation==1.0.1        # via nicfit.py
