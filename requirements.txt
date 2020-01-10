@@ -12,7 +12,7 @@ deprecation==1.0.1        # via nicfit.py
 idna==2.6                 # via cryptography
 lxml==4.1.1
 nicfit.py==0.6.6
-pycares==2.3.0            # via aiodns
+pycares==3.1.1            # via aiodns
 pycparser==2.18           # via cffi
 pyopenssl==17.5.0
 six==1.11.0               # via cryptography, pyopenssl
